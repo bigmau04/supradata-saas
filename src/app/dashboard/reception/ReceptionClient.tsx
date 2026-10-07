@@ -79,32 +79,32 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
       {/* SHIFT SUMMARY CARD */}
       {activeShift && !scanResult && (
         <div className="w-full flex flex-col gap-4">
-          <div className="w-full bg-white rounded-3xl shadow p-6 border flex items-center justify-between">
+          <div className="w-full bg-white rounded-3xl shadow p-4 sm:p-6 border flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="text-sm font-bold text-gray-500 uppercase flex items-center gap-2">
                 <Unlock size={16} className="text-green-500" /> Turno Abierto
               </div>
-              <div className="flex gap-6 mt-2 text-sm text-gray-600">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-x-6 gap-y-1 mt-2 text-sm text-gray-600">
                 <div>Base: <span className="font-bold">${Number(activeShift.initialCash).toLocaleString('es-CO')}</span></div>
                 <div>Recaudos (Efectivo): <span className="font-bold text-green-600">+${activeShift.totalCashIn.toLocaleString('es-CO')}</span></div>
                 <div>Gastos: <span className="font-bold text-red-600">-${activeShift.totalExpenses.toLocaleString('es-CO')}</span></div>
               </div>
-              <div className="text-xl font-black text-gray-800 mt-1">
+              <div className="text-lg sm:text-xl font-black text-gray-800 mt-2">
                 Efectivo Esperado: ${activeShift.expectedCash.toLocaleString('es-CO')}
               </div>
             </div>
-            <div className="flex gap-3">
-              <button onClick={() => setShowExpense(true)} className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-xl font-bold hover:bg-red-100 transition">
+            <div className="grid grid-cols-2 gap-3 lg:flex">
+              <button onClick={() => setShowExpense(true)} className="flex items-center justify-center gap-2 bg-red-50 text-red-600 px-3 sm:px-4 py-3 rounded-xl font-bold hover:bg-red-100 transition">
                 <MinusCircle size={18} /> Gasto Menor
               </button>
-              <button onClick={() => setShowCloseShift(true)} className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-xl font-bold hover:bg-gray-800 transition">
+              <button onClick={() => setShowCloseShift(true)} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-3 sm:px-4 py-3 rounded-xl font-bold hover:bg-gray-800 transition">
                 <Lock size={18} /> Cerrar Turno
               </button>
             </div>
           </div>
 
           {/* MOVIMIENTOS DEL TURNO */}
-          <div className="w-full bg-white rounded-3xl shadow-sm border p-6">
+          <div className="w-full bg-white rounded-3xl shadow-sm border p-4 sm:p-6">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Movimientos del Turno</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -158,11 +158,11 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
       )}
 
       {scanResult ? (
-        <div className={`w-full rounded-3xl shadow-2xl p-12 flex flex-col items-center justify-center transition-all duration-300 ${scanResult.success ? 'bg-green-500' : 'bg-red-500'} text-white h-[400px]`}>
+        <div className={`w-full rounded-3xl shadow-2xl p-6 sm:p-12 flex flex-col items-center justify-center transition-all duration-300 ${scanResult.success ? 'bg-green-500' : 'bg-red-500'} text-white min-h-[400px]`}>
            <div className="h-32 w-32 rounded-full bg-white/20 flex items-center justify-center text-white mb-6 text-6xl shadow-inner border-4 border-white/30">
               {scanResult.member?.photoUrl ? <img src={scanResult.member.photoUrl} alt="avatar" className="h-full w-full rounded-full object-cover" /> : <User size={64} />}
            </div>
-           <h2 className="text-4xl font-extrabold mb-2 text-center">{scanResult.member?.fullName || 'Desconocido'}</h2>
+           <h2 className="text-3xl sm:text-4xl font-extrabold mb-2 text-center break-words max-w-full">{scanResult.member?.fullName || 'Desconocido'}</h2>
            <p className="text-2xl font-semibold opacity-90 text-center uppercase tracking-widest mt-4 bg-black/20 px-6 py-2 rounded-full">{scanResult.message}</p>
         </div>
       ) : (
