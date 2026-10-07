@@ -127,7 +127,7 @@ export function MembersClient({ initialMembers, plans }: { initialMembers: any[]
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="px-6 py-4 font-medium text-gray-600">Nombre</th>
@@ -196,12 +196,12 @@ export function MembersClient({ initialMembers, plans }: { initialMembers: any[]
               </tr>
             )}
           </tbody>
-        </table>
+        </table></div>
       </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+          <div className="bg-white rounded-2xl w-full max-w-md p-5 sm:p-6 max-h-[90dvh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Registrar Nuevo Miembro</h2>
             <form action={handleCreate} className="space-y-4">
               <div>

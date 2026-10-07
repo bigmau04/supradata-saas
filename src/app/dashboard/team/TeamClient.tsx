@@ -39,7 +39,7 @@ export function TeamClient({ initialMembers }: { initialMembers: any[] }) {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="p-4 font-semibold text-gray-600">Nombre</th>
@@ -70,12 +70,12 @@ export function TeamClient({ initialMembers }: { initialMembers: any[] }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 sm:p-6 relative max-h-[90dvh] overflow-y-auto">
             <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800">
               <X size={24} />
             </button>

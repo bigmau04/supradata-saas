@@ -22,7 +22,7 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="px-6 py-4 font-medium text-gray-600">Nombre</th>
@@ -66,12 +66,12 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
               </tr>
             )}
           </tbody>
-        </table>
+        </table></div>
       </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full relative">
+          <div className="bg-white rounded-3xl shadow-2xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
             <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={24} /></button>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Nuevo Entrenador</h2>
             <form action={async (formData) => { await createCoach(formData); setShowModal(false); }} className="space-y-4">
@@ -79,7 +79,7 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
                 <input name="fullName" required className="w-full border-2 rounded-xl p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Documento</label>
                   <input name="documentId" className="w-full border-2 rounded-xl p-3 outline-none" />

@@ -35,7 +35,7 @@ export function PlansClient({ initialPlans }: { initialPlans: any[] }) {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="p-4 font-semibold text-gray-600">Nombre del Plan</th>
@@ -78,12 +78,12 @@ export function PlansClient({ initialPlans }: { initialPlans: any[] }) {
               </tr>
             )})}
           </tbody>
-        </table>
+        </table></div>
       </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 sm:p-6 relative max-h-[90dvh] overflow-y-auto">
             <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={24} /></button>
             <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
               <CalendarDays className="text-blue-600" /> Nuevo Plan Comercial
@@ -93,7 +93,7 @@ export function PlansClient({ initialPlans }: { initialPlans: any[] }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre (ej. Plan Mensual)</label>
                 <input name="name" required className="w-full border-2 p-3 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Duración (días)</label>
                   <input name="durationDays" type="number" required placeholder="30" className="w-full border-2 p-3 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" />

@@ -145,7 +145,7 @@ export function FinanceClient({ data }: { data: any }) {
              <div className="p-6 border-b">
                <h2 className="text-xl font-bold text-gray-800">Transacciones Recientes</h2>
              </div>
-             <table className="w-full text-left">
+             <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left">
                <thead className="bg-gray-50 border-b">
                  <tr>
                    <th className="px-6 py-4 font-medium text-gray-600">Fecha</th>
@@ -185,7 +185,7 @@ export function FinanceClient({ data }: { data: any }) {
                    </tr>
                  )}
                </tbody>
-             </table>
+             </table></div>
            </div>
         </div>
       </div>

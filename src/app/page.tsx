@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import MobileMenu from "./MobileMenu";
 import {
   Activity,
   ArrowRight,
@@ -10,7 +11,6 @@ import {
   Eye,
   HeartPulse,
   Lock,
-  Menu,
   MessageCircle,
   Minus,
   QrCode,
@@ -163,7 +163,7 @@ function Navbar() {
         <div className="flex items-center gap-2">
           <Link
             href="/login"
-            className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:inline-flex"
           >
             Iniciar Sesión
           </Link>
@@ -174,33 +174,7 @@ function Navbar() {
             Crear Gimnasio Gratis
           </Link>
 
-          {/* Menú móvil sin JS (details/summary) */}
-          <details className="group relative lg:hidden">
-            <summary
-              className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 [&::-webkit-details-marker]:hidden"
-              aria-label="Abrir menú"
-            >
-              <Menu className="h-5 w-5 group-open:hidden" />
-              <X className="hidden h-5 w-5 group-open:block" />
-            </summary>
-            <div className="absolute right-0 top-12 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-900/10">
-              {NAV_LINKS.map((l) => (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  {l.label}
-                </a>
-              ))}
-              <Link
-                href="/register"
-                className="mt-1 block rounded-lg bg-blue-600 px-3 py-2.5 text-center text-sm font-semibold text-white hover:bg-blue-700 sm:hidden"
-              >
-                Crear Gimnasio Gratis
-              </Link>
-            </div>
-          </details>
+          <MobileMenu links={NAV_LINKS} />
         </div>
       </div>
     </header>
@@ -229,7 +203,7 @@ function DashboardMockup() {
               Sede Principal
             </span>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+          <div className="inline-flex items-center gap-2 self-start rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold leading-snug text-emerald-700 sm:self-auto sm:text-xs">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
@@ -243,12 +217,12 @@ function DashboardMockup() {
           <div className="flex flex-col gap-4 rounded-xl border border-rose-100 bg-rose-50/50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Revenue en Riesgo
+                Revenue proyectado
               </p>
-              <p className="mt-1 flex items-center gap-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-                <TrendingDown className="h-7 w-7 text-rose-500" />
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                <TrendingDown className="h-6 w-6 shrink-0 text-rose-500 sm:h-7 sm:w-7" />
                 $1.450.000
-                <span className="text-base font-semibold text-rose-500">
+                <span className="text-sm font-semibold text-rose-500 sm:text-base">
                   en Riesgo
                 </span>
               </p>
@@ -334,7 +308,7 @@ function DashboardMockup() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-white to-slate-50 pb-20 pt-16 sm:pb-28 sm:pt-24">
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-white to-slate-50 pb-14 pt-12 sm:pb-28 sm:pt-24">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(37,99,235,0.08),transparent)]"
@@ -388,7 +362,7 @@ function Hero() {
 
 function Pains() {
   return (
-    <section className="bg-slate-50 py-20 sm:py-24">
+    <section className="bg-slate-50 py-14 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
@@ -459,7 +433,7 @@ function Bullet({ children }: { children: React.ReactNode }) {
 
 function FeatureCash() {
   return (
-    <section id="mostrador" className="scroll-mt-20 bg-white py-20 sm:py-24">
+    <section id="mostrador" className="scroll-mt-20 bg-white py-14 sm:py-24">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -570,7 +544,7 @@ function FeatureCash() {
 
 function FeatureRetention() {
   return (
-    <section id="retencion" className="scroll-mt-20 bg-slate-50 py-20 sm:py-24">
+    <section id="retencion" className="scroll-mt-20 bg-slate-50 py-14 sm:py-24">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
         {/* Infografía retención */}
         <div className="order-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:order-1">
@@ -656,7 +630,7 @@ function FeaturePass() {
     { label: "Aforo lleno", cls: "bg-rose-500" },
   ];
   return (
-    <section id="suprapass" className="scroll-mt-20 bg-white py-20 sm:py-24">
+    <section id="suprapass" className="scroll-mt-20 bg-white py-14 sm:py-24">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -756,7 +730,7 @@ function FeaturePass() {
 
 function Comparison() {
   return (
-    <section className="bg-slate-50 py-20 sm:py-24">
+    <section className="bg-slate-50 py-14 sm:py-24">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
@@ -770,8 +744,48 @@ function Comparison() {
           </p>
         </div>
 
-        <div className="mt-12 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[640px] border-collapse text-left">
+        {/* Móvil: tarjetas apiladas */}
+        <div className="mt-10 space-y-4 md:hidden">
+          {COMPARISON.map((r) => (
+            <div
+              key={r.feature}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+            >
+              <p className="border-b border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900">
+                {r.feature}
+              </p>
+              <div className="space-y-3 p-4">
+                <div className="flex items-start gap-2.5">
+                  <X className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                      Tradicional
+                    </p>
+                    <p className="text-sm leading-relaxed text-slate-600">{r.legacy}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5 rounded-xl bg-blue-50/60 p-3">
+                  <Check
+                    className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600"
+                    strokeWidth={3}
+                  />
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">
+                      SupraData
+                    </p>
+                    <p className="text-sm font-medium leading-relaxed text-slate-800">
+                      {r.supra}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tablet/escritorio: tabla */}
+        <div className="mt-12 hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
+          <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-sm">
                 <th className="px-5 py-4 font-semibold text-slate-500">
@@ -826,7 +840,7 @@ function Comparison() {
 
 function Benefits() {
   return (
-    <section id="beneficios" className="scroll-mt-20 bg-white py-20 sm:py-24">
+    <section id="beneficios" className="scroll-mt-20 bg-white py-14 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
@@ -864,8 +878,8 @@ function Benefits() {
 
 function FinalCta() {
   return (
-    <section className="bg-white px-4 pb-20 sm:px-6 sm:pb-24 lg:px-8">
-      <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-emerald-50 px-6 py-14 text-center shadow-md shadow-slate-900/5 sm:px-12 sm:py-16">
+    <section className="bg-white px-4 pb-14 sm:px-6 sm:pb-24 lg:px-8">
+      <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-emerald-50 px-5 py-12 text-center shadow-md shadow-slate-900/5 sm:px-12 sm:py-16">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-blue-200/30 blur-3xl"
@@ -962,7 +976,7 @@ function Footer() {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 [color-scheme:light]">
+    <div className="min-h-screen overflow-x-clip bg-white text-slate-900 [color-scheme:light]">
       <Navbar />
       <main>
         <Hero />

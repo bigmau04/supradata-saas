@@ -166,7 +166,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
            <p className="text-2xl font-semibold opacity-90 text-center uppercase tracking-widest mt-4 bg-black/20 px-6 py-2 rounded-full">{scanResult.message}</p>
         </div>
       ) : (
-        <div className="w-full bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
+        <div className="w-full bg-white rounded-3xl shadow-xl p-5 sm:p-8 border border-gray-100">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Control de Recepción</h1>
             <p className="text-gray-500 mt-2 font-medium">Lectura de código QR o Cédula</p>
@@ -220,7 +220,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
       {/* MODALS */}
       {showOpenShift && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full relative">
+          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
             {userRole === 'owner' && <button onClick={() => setShowOpenShift(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>}
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Wallet className="text-blue-600" /> Abrir Turno de Caja</h2>
             <form action={async (formData) => { await openShift(formData); window.location.reload(); }} className="space-y-4">
@@ -236,7 +236,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
 
       {showCloseShift && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full relative">
+          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
             <button onClick={() => setShowCloseShift(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Lock className="text-gray-900" /> Arqueo y Cierre</h2>
             <div className="bg-gray-50 p-4 rounded-xl mb-6 text-center border">
@@ -258,7 +258,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
 
       {showExpense && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full relative">
+          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
             <button onClick={() => setShowExpense(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><MinusCircle className="text-red-600" /> Registrar Gasto Menor</h2>
             <form action={async (formData) => { 
@@ -287,7 +287,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
       {/* QUICK PASS MODAL */}
       {showQuickPass && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
             <button onClick={() => setShowQuickPass(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
             <h2 className="text-2xl font-bold text-gray-800 mb-6"><DollarSign className="inline text-green-600" /> Visita Exprés</h2>
             <form action={async (formData) => { 
@@ -300,7 +300,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
             >
               <input name="documentId" required placeholder="Cédula" className="w-full border-2 rounded-xl p-3" autoFocus />
               <input name="fullName" required placeholder="Nombre Completo" className="w-full border-2 rounded-xl p-3" />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input name="amount" type="number" required defaultValue="10000" className="w-full border-2 rounded-xl p-3" placeholder="Monto" />
                 <select name="method" className="w-full border-2 rounded-xl p-3 bg-white">
                   <option value="cash">Efectivo</option>
@@ -322,7 +322,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
       {/* STORE MODAL */}
       {showStore && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
             <button onClick={() => setShowStore(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
             <h2 className="text-2xl font-bold text-gray-800 mb-6"><ShoppingCart className="inline text-purple-600" /> Venta de Mostrador</h2>
             <form action={async (formData) => {
@@ -345,7 +345,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
                 {products.map(p => <option key={p.id} value={p.id}>{p.name} - ${Number(p.price).toLocaleString('es-CO')}</option>)}
               </select>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-500 mb-1">Cantidad</label>
                   <input id="store-qty" name="quantity" type="number" min="1" defaultValue="1" required className="w-full border-2 rounded-xl p-3" onChange={(e) => {

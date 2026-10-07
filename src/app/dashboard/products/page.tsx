@@ -12,7 +12,7 @@ export default async function ProductsPage() {
   const products = await getAllProductsAdmin();
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">Gestión de Tienda</h1>
         <ProductsClient initialProducts={products} />

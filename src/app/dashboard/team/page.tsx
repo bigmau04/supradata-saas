@@ -12,7 +12,7 @@ export default async function TeamPage() {
   const members = await getTeamMembers();
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">Equipo y Personal</h1>
         <TeamClient initialMembers={members} />
