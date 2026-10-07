@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 import { registerAttendance, AttendanceResult } from '@/app/actions/attendance';
 import { registerQuickPass } from '@/app/actions/quickPass';
 import { sellProduct } from '@/app/actions/products';
@@ -43,7 +43,12 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
 
   useEffect(() => {
     if (scannerOpen) {
-      const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
+      const scanner = new Html5QrcodeScanner("reader", { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        videoConstraints: { facingMode: "environment" }
+      }, false);
       scanner.render(
         async (decodedText) => {
           scanner.clear();
@@ -210,7 +215,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
             </div>
           ) : (
             <div className="flex flex-col items-center">
-               <div id="reader" className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl bg-black border-4 border-gray-900"></div>
+               <div id="reader" className="w-full max-w-md rounded-2xl overflow-hidden shadow-sm bg-white border border-gray-200 p-2 text-slate-800 [&_a]:text-blue-600 [&_button]:mt-4 [&_button]:bg-blue-600 [&_button]:text-white [&_button]:px-4 [&_button]:py-2 [&_button]:rounded-lg [&_select]:p-2 [&_select]:rounded-lg [&_select]:bg-slate-100 [&_select]:border [&_select]:border-slate-300 [&_select]:text-slate-900 [&_span]:text-slate-700"></div>
                <button onClick={() => setScannerOpen(false)} className="mt-6 text-gray-600 hover:bg-gray-100 font-bold px-8 py-3 rounded-xl transition">Cerrar Cámara</button>
             </div>
           )}
