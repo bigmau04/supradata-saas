@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createCoach, toggleCoachStatus, updateCoach } from '@/app/actions/coaches';
 import { Users, Plus, X, Edit } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -10,6 +10,7 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
   const [editCoach, setEditCoach] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [filterActive, setFilterActive] = useState(true);
+  const createFormRef = useRef<HTMLFormElement>(null);
 
   const filteredCoaches = initialCoaches.filter(c => c.isActive === filterActive);
 
@@ -67,10 +68,10 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
                 <td className="px-6 py-4 text-gray-600">{coach.specialty}</td>
                 <td className="px-6 py-4 text-gray-600">{coach.phone}</td>
                 <td className="px-6 py-4 text-center">
-                  <span className="font-bold text-lg text-gray-800">{coach.assignedStudents || 0}</span>
+                  <span className="font-bold text-lg text-gray-800">{coach.assignedCount ?? coach.assignedStudents ?? 0}</span>
                 </td>
                 <td className="px-6 py-4 text-center">
-                  <span className="font-bold text-lg text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{coach.inRoomStudents || 0}</span>
+                  <span className="font-bold text-lg text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{coach.inGymCount ?? coach.inRoomStudents ?? 0}</span>
                 </td>
                 <td className="px-6 py-4 text-gray-600 text-sm max-w-xs truncate">{coach.scheduleDetails}</td>
                 <td className="px-6 py-4">
@@ -109,18 +110,31 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl shadow-2xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
-            <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={24} /></button>
+            <button 
+              onClick={() => {
+                createFormRef.current?.reset();
+                setShowModal(false);
+              }} 
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"
+            >
+              <X size={24} />
+            </button>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Nuevo Entrenador</h2>
-            <form action={async (formData) => { 
-              const res = await createCoach(formData); 
-              console.log("Respuesta de createCoach:", res);
-              if (res?.error) {
-                alert('Error al crear entrenador: ' + res.error);
-              } else {
-                setShowModal(false); 
-                router.refresh();
-              }
-            }} className="space-y-4">
+            <form 
+              ref={createFormRef}
+              action={async (formData) => { 
+                const res = await createCoach(formData); 
+                console.log("Respuesta de createCoach:", res);
+                if (res?.error) {
+                  alert('Error al crear entrenador: ' + res.error);
+                } else {
+                  createFormRef.current?.reset();
+                  setShowModal(false); 
+                  router.refresh();
+                }
+              }} 
+              className="space-y-4"
+            >
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
                 <input name="fullName" required className="w-full border-2 rounded-xl p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" />

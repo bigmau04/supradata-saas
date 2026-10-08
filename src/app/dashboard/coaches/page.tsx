@@ -6,7 +6,7 @@ export default async function CoachesPage() {
   try {
     coachesData = await getCoaches();
   } catch (error) {
-    console.error('Error loading coaches page:', error);
+    console.error("Error cargando coaches en page.tsx:", error);
   }
   
   return (

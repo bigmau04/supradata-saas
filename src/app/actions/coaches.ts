@@ -1,46 +1,68 @@
 'use server'
 
 import { db } from '@/db';
-import { coaches, members, memberSubscriptions, attendances } from '@/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { coaches, members, attendances } from '@/db/schema';
+import { eq, and, gte, isNotNull, sql } from 'drizzle-orm';
 import { verifySession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
-export async function getCoaches() {
-  const auth = await verifySession();
-  if (!auth) throw new Error('No autorizado');
+export async function getCoaches(activeOnly?: boolean) {
+  try {
+    const auth = await verifySession();
+    if (!auth) throw new Error('No autorizado');
 
-  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const conditions = [eq(coaches.gymId, auth.session.gymId)];
+    if (typeof activeOnly === 'boolean') {
+      conditions.push(eq(coaches.isActive, activeOnly));
+    }
 
-  return await db.select({
-    id: coaches.id,
-    fullName: coaches.fullName,
-    documentId: coaches.documentId,
-    phone: coaches.phone,
-    specialty: coaches.specialty,
-    scheduleDetails: coaches.scheduleDetails,
-    isActive: coaches.isActive,
-    isClockedIn: coaches.isClockedIn,
-    lastClockIn: coaches.lastClockIn,
-    lastClockOut: coaches.lastClockOut,
-    assignedStudents: sql<number>`COALESCE((
-      SELECT COUNT(DISTINCT m.id) 
-      FROM ${members} m
-      JOIN ${memberSubscriptions} ms ON ms.member_id = m.id
-      WHERE m.coach_id = ${coaches.id} 
-        AND ms.status = 'active' 
-        AND ms.end_date >= CURRENT_DATE
-    ), 0)`.mapWith(Number),
-    inRoomStudents: sql<number>`COALESCE((
-      SELECT COUNT(DISTINCT m.id) 
-      FROM ${members} m
-      JOIN ${attendances} a ON a.member_id = m.id
-      WHERE m.coach_id = ${coaches.id} 
-        AND a.check_in >= ${twoHoursAgo.toISOString()}
-        AND a.check_out IS NULL
-    ), 0)`.mapWith(Number)
-  }).from(coaches).where(eq(coaches.gymId, auth.session.gymId));
+    // Paso A: Consulta base de entrenadores
+    const coachList = await db
+      .select()
+      .from(coaches)
+      .where(and(...conditions));
+
+    console.log("Coaches encontrados:", coachList.length);
+
+    if (coachList.length === 0) {
+      return [];
+    }
+
+    // Paso B: Conteo seguro de socios asignados y en sala
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+    const gymMembers = await db
+      .select({ id: members.id, coachId: members.coachId })
+      .from(members)
+      .where(and(eq(members.gymId, auth.session.gymId), isNotNull(members.coachId)));
+
+    const recentAttendances = await db
+      .select({ memberId: attendances.memberId })
+      .from(attendances)
+      .where(and(eq(attendances.gymId, auth.session.gymId), gte(attendances.checkIn, twoHoursAgo)));
+
+    const recentMemberIdsSet = new Set(recentAttendances.map(a => a.memberId));
+
+    // Mapear contadores por cada entrenador
+    return coachList.map(coach => {
+      const coachMembers = gymMembers.filter(m => m.coachId === coach.id);
+      const assignedCount = coachMembers.length;
+      const inGymCount = coachMembers.filter(m => recentMemberIdsSet.has(m.id)).length;
+
+      return {
+        ...coach,
+        assignedCount,
+        assignedStudents: assignedCount,
+        inGymCount,
+        inRoomStudents: inGymCount
+      };
+    });
+  } catch (error) {
+    console.error("Error en getCoaches:", error);
+    throw error;
+  }
 }
+
 
 export async function createCoach(formData: FormData) {
   try {
@@ -149,17 +171,26 @@ export async function getCoachPortalData(coachId: string) {
       fullName: members.fullName,
       phone: members.phone,
       photoUrl: members.photoUrl,
-      isInRoom: sql<boolean>`EXISTS (
-        SELECT 1 FROM ${attendances} a 
-        WHERE a.member_id = ${members.id} 
-          AND a.check_in >= ${twoHoursAgo.toISOString()} 
-          AND a.check_out IS NULL
-      )`.mapWith(Boolean)
     })
     .from(members)
     .where(eq(members.coachId, coachId));
 
-    return { success: true, data: { coach, assignedMembers } };
+    const recentAttendances = await db.select({
+      memberId: attendances.memberId
+    })
+    .from(attendances)
+    .where(and(
+      eq(attendances.gymId, auth.session.gymId),
+      gte(attendances.checkIn, twoHoursAgo)
+    ));
+
+    const inRoomSet = new Set(recentAttendances.map(a => a.memberId));
+    const dataWithInRoom = assignedMembers.map(m => ({
+      ...m,
+      isInRoom: inRoomSet.has(m.id)
+    }));
+
+    return { success: true, data: { coach, assignedMembers: dataWithInRoom } };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
