@@ -14,7 +14,6 @@ import {
   Minus,
   QrCode,
   Scale,
-  ShieldCheck,
   ShoppingCart,
   TrendingDown,
   TrendingUp,
@@ -108,14 +107,9 @@ function Logo() {
       <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25">
         <Dumbbell className="h-5 w-5" strokeWidth={2.4} />
       </span>
-      <div className="flex flex-col">
-        <span className="text-lg font-black tracking-tight text-slate-900 leading-tight">
-          SupraData <span className="text-blue-600">Gym</span>
-        </span>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-          Fitness Operations OS
-        </span>
-      </div>
+      <span className="text-lg font-black tracking-tight text-slate-900">
+        SupraData <span className="text-blue-600">Gym</span>
+      </span>
     </Link>
   );
 }
@@ -357,13 +351,8 @@ function Hero() {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          {/* Pill Badge especializado */}
-          <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-bold text-blue-700 shadow-sm sm:text-sm">
-            🏋️ Diseñado exclusivamente para Gimnasios y Salas de Entrenamiento
-          </span>
-
           {/* Título H1 contundente */}
-          <h1 className="mt-6 text-3xl font-black tracking-tight text-slate-900 sm:text-5xl sm:leading-[1.12] lg:text-6xl">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-5xl sm:leading-[1.12] lg:text-6xl">
             El software que blinda la caja de tu gimnasio y{" "}
             <span className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
               rescata a los socios
@@ -1052,10 +1041,6 @@ function Footer() {
               Plataforma de gestión operativa, control de caja y retención de deportistas para
               gimnasios, salas de musculación y centros de entrenamiento funcional.
             </p>
-            <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-emerald-700">
-              <ShieldCheck className="h-4 w-4" />
-              <span>Multi-tenant seguro por NIT / Cédula</span>
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
