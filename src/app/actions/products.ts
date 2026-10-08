@@ -60,6 +60,31 @@ export async function toggleProductStatus(id: string, isActive: boolean) {
   return { success: true };
 }
 
+export async function updateProduct(formData: FormData) {
+  const auth = await verifySession();
+  if (!auth || auth.session.role !== 'owner') return { success: false, message: 'No autorizado' };
+
+  const id = formData.get('id') as string;
+  const name = (formData.get('name') as string)?.trim();
+  const price = formData.get('price') as string;
+
+  if (!id) return { success: false, message: 'Producto no especificado' };
+  if (!name) return { success: false, message: 'El nombre es obligatorio' };
+  if (!price || isNaN(Number(price)) || Number(price) <= 0) return { success: false, message: 'El precio debe ser un numero positivo' };
+
+  try {
+    await db.update(products)
+      .set({ name, price })
+      .where(and(eq(products.id, id), eq(products.gymId, auth.session.gymId)));
+    revalidatePath('/dashboard/products');
+    revalidatePath('/dashboard/reception');
+    return { success: true };
+  } catch (error) {
+    console.error('[updateProduct]', error);
+    return { success: false, message: 'Error al actualizar el producto' };
+  }
+}
+
 export async function sellProduct(formData: FormData) {
   const auth = await verifySession();
   if (!auth) return { success: false, message: 'No autorizado' };

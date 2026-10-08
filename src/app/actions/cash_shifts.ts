@@ -67,60 +67,85 @@ export async function getActiveShift() {
 }
 
 export async function openShift(formData: FormData) {
-  const auth = await verifySession();
-  if (!auth) return { success: false };
+  try {
+    const auth = await verifySession();
+    if (!auth) return { success: false, message: 'No autorizado.' };
+    if (!auth.session.branchId) return { success: false, message: 'Tu usuario no tiene una sucursal asignada. Contacta al administrador.' };
 
-  const initialCash = formData.get('initialCash') as string;
-  await db.insert(cashShifts).values({
-    gymId: auth.session.gymId,
-    branchId: auth.session.branchId!,
-    userId: auth.session.userId,
-    initialCash: initialCash || '0'
-  });
-  revalidatePath('/dashboard/reception');
-  return { success: true };
+    const initialCash = formData.get('initialCash') as string;
+    await db.insert(cashShifts).values({
+      gymId: auth.session.gymId,
+      branchId: auth.session.branchId,
+      userId: auth.session.userId,
+      initialCash: initialCash || '0'
+    });
+    revalidatePath('/dashboard/reception');
+    return { success: true };
+  } catch (err) {
+    console.error('[openShift]', err);
+    return { success: false, message: 'Error al abrir el turno. Intenta de nuevo.' };
+  }
 }
 
 export async function closeShift(formData: FormData) {
-  const auth = await verifySession();
-  if (!auth) return { success: false };
+  try {
+    const auth = await verifySession();
+    if (!auth) return { success: false, message: 'No autorizado.' };
 
-  const shiftId = formData.get('shiftId') as string;
-  const expected = formData.get('expected') as string;
-  const counted = formData.get('counted') as string;
+    const shiftId = formData.get('shiftId') as string;
+    const expected = formData.get('expected') as string;
+    const counted = formData.get('counted') as string;
 
-  const expectedNum = Number(expected);
-  const countedNum = Number(counted);
-  const diff = countedNum - expectedNum;
+    if (!shiftId) return { success: false, message: 'Turno no identificado. Recarga la pagina e intenta de nuevo.' };
+    if (!counted || isNaN(Number(counted))) return { success: false, message: 'Ingresa un valor valido de efectivo contado.' };
 
-  await db.update(cashShifts).set({
-    isClosed: true,
-    closingTime: new Date(),
-    finalCashExpected: expectedNum.toString(),
-    finalCashCounted: countedNum.toString(),
-    difference: diff.toString()
-  }).where(eq(cashShifts.id, shiftId));
+    const expectedNum = Number(expected);
+    const countedNum = Number(counted);
+    const diff = countedNum - expectedNum;
 
-  revalidatePath('/dashboard/reception');
-  return { success: true };
+    await db.update(cashShifts).set({
+      isClosed: true,
+      closingTime: new Date(),
+      finalCashExpected: expectedNum.toString(),
+      finalCashCounted: countedNum.toString(),
+      difference: diff.toString()
+    }).where(eq(cashShifts.id, shiftId));
+
+    revalidatePath('/dashboard/reception');
+    return { success: true };
+  } catch (err) {
+    console.error('[closeShift]', err);
+    return { success: false, message: 'Error al cerrar el turno. Intenta de nuevo.' };
+  }
 }
 
 export async function registerMinorExpense(formData: FormData) {
-  const auth = await verifySession();
-  if (!auth) return { success: false };
+  try {
+    const auth = await verifySession();
+    if (!auth) return { success: false, message: 'No autorizado.' };
+    if (!auth.session.branchId) return { success: false, message: 'Tu usuario no tiene una sucursal asignada.' };
 
-  const amount = formData.get('amount') as string;
-  const description = formData.get('description') as string;
+    const amount = formData.get('amount') as string;
+    const description = formData.get('description') as string;
 
-  await db.insert(expenses).values({
-    gymId: auth.session.gymId,
-    branchId: auth.session.branchId!,
-    registeredByUserId: auth.session.userId,
-    amount,
-    description
-  });
+    if (!description?.trim()) return { success: false, message: 'La descripcion del gasto es obligatoria.' };
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      return { success: false, message: 'El monto del gasto debe ser un numero positivo.' };
+    }
 
-  revalidatePath('/dashboard/reception');
-  revalidatePath('/dashboard/finance');
-  return { success: true };
+    await db.insert(expenses).values({
+      gymId: auth.session.gymId,
+      branchId: auth.session.branchId,
+      registeredByUserId: auth.session.userId,
+      amount,
+      description: description.trim()
+    });
+
+    revalidatePath('/dashboard/reception');
+    revalidatePath('/dashboard/finance');
+    return { success: true };
+  } catch (err) {
+    console.error('[registerMinorExpense]', err);
+    return { success: false, message: 'Error al registrar el gasto. Intenta de nuevo.' };
+  }
 }

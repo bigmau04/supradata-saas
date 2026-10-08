@@ -6,7 +6,22 @@ import { registerAttendance, AttendanceResult } from '@/app/actions/attendance';
 import { registerQuickPass } from '@/app/actions/quickPass';
 import { sellProduct } from '@/app/actions/products';
 import { openShift, closeShift, registerMinorExpense } from '@/app/actions/cash_shifts';
-import { User, QrCode, Keyboard, DollarSign, X, ShoppingCart, Lock, Unlock, MinusCircle, Wallet } from 'lucide-react';
+import { User, QrCode, Keyboard, DollarSign, X, ShoppingCart, Lock, Unlock, MinusCircle, Wallet, AlertTriangle, CheckCircle } from 'lucide-react';
+
+function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
+  return (
+    <div className={`fixed top-4 right-4 z-[100] max-w-sm w-full shadow-2xl rounded-2xl p-4 flex items-start gap-3 border ${
+      type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'
+    }`}>
+      {type === 'error'
+        ? <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+        : <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+      }
+      <p className="text-sm font-medium flex-1">{message}</p>
+      <button onClick={onClose} className="text-gray-400 hover:text-gray-600 shrink-0"><X className="h-4 w-4" /></button>
+    </div>
+  );
+}
 
 export function ReceptionClient({ coaches = [], products = [], activeShift = null, userRole = 'receptionist' }: { coaches?: any[], products?: any[], activeShift?: any, userRole?: string }) {
   const [inputValue, setInputValue] = useState('');
@@ -14,6 +29,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
   const [scannerOpen, setScannerOpen] = useState(false);
   const [showQuickPass, setShowQuickPass] = useState(false);
   const [showStore, setShowStore] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
   const [showOpenShift, setShowOpenShift] = useState(!activeShift && userRole !== 'owner');
   const [showCloseShift, setShowCloseShift] = useState(false);
@@ -24,6 +40,11 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
   const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 6000);
+  };
 
   useEffect(() => {
     if (!scannerOpen && !scanResult && !showQuickPass && !showStore && !showOpenShift && !showCloseShift && !showExpense) {
@@ -80,6 +101,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
 
   return (
     <div className="flex flex-col items-center max-w-4xl mx-auto font-sans gap-6">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       
       {/* SHIFT SUMMARY CARD */}
       {activeShift && !scanResult && (
@@ -228,7 +250,11 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
           <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
             {userRole === 'owner' && <button onClick={() => setShowOpenShift(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>}
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Wallet className="text-blue-600" /> Abrir Turno de Caja</h2>
-            <form action={async (formData) => { await openShift(formData); window.location.reload(); }} className="space-y-4">
+            <form action={async (formData) => {
+              const res = await openShift(formData);
+              if (res.success) { window.location.reload(); }
+              else { showToast((res as any).message || 'Error al abrir el turno.', 'error'); }
+            }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Efectivo Inicial / Base ($)</label>
                 <input name="initialCash" type="number" required defaultValue="50000" className="w-full border-2 rounded-xl p-3" autoFocus />
@@ -248,11 +274,15 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
               <p className="text-sm text-gray-500 uppercase font-bold">Efectivo Esperado del Sistema</p>
               <p className="text-3xl font-black text-gray-800">${activeShift.expectedCash.toLocaleString('es-CO')}</p>
             </div>
-            <form action={async (formData) => { await closeShift(formData); window.location.reload(); }} className="space-y-4">
+            <form action={async (formData) => {
+              const res = await closeShift(formData);
+              if (res.success) { window.location.reload(); }
+              else { showToast((res as any).message || 'Error al cerrar el turno.', 'error'); }
+            }} className="space-y-4">
               <input type="hidden" name="shiftId" value={activeShift.id} />
               <input type="hidden" name="expected" value={activeShift.expectedCash} />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Efectivo Físico Contado ($)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Efectivo Fisico Contado ($)</label>
                 <input name="counted" type="number" required defaultValue={activeShift.expectedCash} className="w-full border-2 rounded-xl p-3 focus:ring-gray-900" autoFocus />
               </div>
               <button type="submit" className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-gray-800 transition mt-4">Confirmar y Cerrar Turno</button>
@@ -267,14 +297,19 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
             <button onClick={() => setShowExpense(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><MinusCircle className="text-red-600" /> Registrar Gasto Menor</h2>
             <form action={async (formData) => { 
-                setIsSubmittingExpense(true); 
-                await registerMinorExpense(formData); 
-                setIsSubmittingExpense(false); 
-                setShowExpense(false); 
+                setIsSubmittingExpense(true);
+                const res = await registerMinorExpense(formData);
+                setIsSubmittingExpense(false);
+                if (res.success) {
+                  setShowExpense(false);
+                  showToast('Gasto registrado correctamente.', 'success');
+                } else {
+                  showToast((res as any).message || 'Error al registrar el gasto.', 'error');
+                }
               }} className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción del Gasto</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripcion del Gasto</label>
                 <input name="description" required placeholder="Ej: Botellón de agua" className="w-full border-2 rounded-xl p-3" autoFocus />
               </div>
               <div>
