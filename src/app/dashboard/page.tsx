@@ -66,7 +66,7 @@ export default async function DashboardPage() {
           <span className="text-lg font-bold">Recepción y Escáner</span>
           <span className="text-sm text-gray-400">Validar carnets y dar acceso a socios</span>
         </Link>
-        <Link href="/dashboard/finance" className="bg-blue-600 text-white p-6 rounded-2xl shadow-md hover:bg-blue-700 transition flex flex-col gap-3">
+        <Link href="/dashboard/finances" className="bg-blue-600 text-white p-6 rounded-2xl shadow-md hover:bg-blue-700 transition flex flex-col gap-3">
           <span className="text-lg font-bold">Finanzas y Caja</span>
           <span className="text-sm text-blue-200">Registrar pagos, gastos y cuadrar turnos</span>
         </Link>
