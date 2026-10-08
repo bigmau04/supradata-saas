@@ -34,10 +34,19 @@ Aislamiento Multi-tenant estricto mediante `gym_id` en todas las consultas de le
   - Check-in por escáner QR o cédula, y pase exprés de 1 clic.
 - **Catálogo de Productos (`/dashboard/products`):**
   - Creación, activación/desactivación y edición rápida (nombre y precio) de productos (solo Admin/Owner).
+- **Gestión de Entrenadores y Asignación:**
+  - Creación, edición y desactivación de entrenadores (`/dashboard/coaches`).
+  - Asignación de socios a entrenadores.
+  - Portal dedicado del entrenador (`/dashboard/coach`) con check-in en sala y monitoreo de estudiantes en vivo.
+- **Seguridad y Anti-Passback:**
+  - Sistema de prevención de múltiples entradas (Anti-Passback) calibrado a 120 minutos.
+  - Generación de Código QR dinámico con caducidad de 45 segundos.
+- **Métricas en Vivo (Live Metrics):**
+  - Panel superior en Recepción y Dashboard con conteo en vivo de Aforo en Sala, Socios Activos y Membresías por Vencer en ≤5 días.
 - **Seguridad y Robustez Técnica:**
   - Protección de rutas middleware (RBAC: Recepcionistas limitados a su módulo).
-  - Blindaje completo de Server Actions con manejo estructurado de errores y notificaciones interactivas (Toasts), garantizando cero caídas "500".
-- **Carnet Digital Público (`/pass/[token]`):** QR de acceso y tarjeta de aforo en vivo semafórica (últimas 2 horas) sin requerir app nativa.
+  - Blindaje completo de Server Actions con manejo estructurado de errores (`try/catch` y `COALESCE` en SQL) y notificaciones interactivas (Toasts), garantizando cero caídas "500".
+- **Carnet Digital Público (`/pass/[token]`):** QR de acceso dinámico y tarjeta de aforo en vivo semafórica (últimas 2 horas) sin requerir app nativa.
 
 ## 4. Hoja de Ruta Priorizada (Roadmap por Fases)
 
