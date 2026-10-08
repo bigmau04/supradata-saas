@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { getFinancialOverview, getRevenueRecoveryData, getDailyBreakdown } from '@/app/actions/finances';
-import { DollarSign, Wallet, CreditCard, TrendingUp, TrendingDown, MessageCircle } from 'lucide-react';
+import { createPayment, voidPayment, createExpense, openCashShift, closeCashShift } from '@/app/actions/finance';
+import { DollarSign, Wallet, CreditCard, TrendingUp, TrendingDown, MessageCircle, Clock, Ban, PlusCircle } from 'lucide-react';
 
-export function FinancesClient() {
+export function FinancesClient({ operationalData }: { operationalData?: any }) {
   const [timeframe, setTimeframe] = useState<'today' | 'week' | 'month' | 'year'>('month');
   const [overview, setOverview] = useState<any>(null);
   const [recoveryData, setRecoveryData] = useState<any>(null);
@@ -11,6 +12,22 @@ export function FinancesClient() {
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [breakdownData, setBreakdownData] = useState<any[]>([]);
+
+  // Estado operativo
+  const { activeShift, transactions, members, coaches, summary } = operationalData || {};
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
+  const [isVoidingId, setIsVoidingId] = useState<string | null>(null);
+
+  const handleVoid = async (id: string) => {
+    const reason = window.prompt("Por favor, ingresa el motivo de la anulación (obligatorio):");
+    if (reason !== null) {
+      if (reason.trim() === '') return alert("El motivo es obligatorio.");
+      setIsVoidingId(id);
+      await voidPayment(id, reason);
+      setIsVoidingId(null);
+    }
+  };
 
   useEffect(() => {
     async function load() {
@@ -159,6 +176,144 @@ export function FinancesClient() {
             </div>
           </div>
         </>
+      )}
+
+      {/* SECCIÓN OPERATIVA (Turno de caja y Transacciones) */}
+      {operationalData && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8 border-t pt-8">
+          {/* Formularios Operativos */}
+          <div className="lg:col-span-1 space-y-6">
+            
+            {/* Turno de Caja */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><Clock size={20}/> Turno de Caja</h2>
+              <div className="mb-4">
+                <p className="text-sm text-gray-500 font-medium">Caja Actual (Esperado)</p>
+                <p className="text-2xl font-bold text-gray-800">{activeShift ? formatMoney(summary?.currentExpectedCash) : 'Caja Cerrada'}</p>
+              </div>
+              {activeShift ? (
+                <form action={closeCashShift} className="space-y-4">
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm text-blue-800 mb-4">
+                    Turno abierto desde: {new Date(activeShift.openingTime).toLocaleTimeString('es-CO')}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Efectivo Físico Contado</label>
+                    <input name="finalCashCounted" type="number" required placeholder="Ej: 150000" className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-100" />
+                  </div>
+                  <button type="submit" className="w-full bg-gray-800 text-white font-bold py-2 rounded-lg hover:bg-black transition">Cerrar Caja (Arqueo)</button>
+                </form>
+              ) : (
+                <form action={openCashShift} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Base / Efectivo Inicial</label>
+                    <input name="initialCash" type="number" required defaultValue="0" className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-100" />
+                  </div>
+                  <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition">Abrir Turno</button>
+                </form>
+              )}
+            </div>
+
+            {/* Registrar Pago Manual */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 text-green-600"><PlusCircle size={20}/> Nuevo Recaudo</h2>
+              <form action={async (formData) => { setIsSubmittingPayment(true); await createPayment(formData); setIsSubmittingPayment(false); }} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Miembro</label>
+                  <select name="memberId" required className="w-full border p-2 rounded-lg outline-none">
+                    <option value="">Seleccione...</option>
+                    {members?.map((m: any) => <option key={m.id} value={m.id}>{m.name} ({m.document})</option>)}
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Monto</label>
+                    <input name="amount" type="number" required className="w-full border p-2 rounded-lg outline-none" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Método</label>
+                    <select name="method" className="w-full border p-2 rounded-lg outline-none">
+                      <option value="cash">Efectivo</option>
+                      <option value="transfer">Transf/Tarjeta</option>
+                    </select>
+                  </div>
+                </div>
+                <button disabled={isSubmittingPayment} type="submit" className="w-full bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50">
+                  {isSubmittingPayment ? 'Procesando...' : 'Registrar Pago'}
+                </button>
+              </form>
+            </div>
+
+            {/* Registrar Gasto */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 text-red-600"><TrendingDown size={20}/> Registrar Gasto</h2>
+              <form action={async (formData) => { setIsSubmittingExpense(true); await createExpense(formData); setIsSubmittingExpense(false); }} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                  <input name="description" required placeholder="Ej: Pago arriendo" className="w-full border p-2 rounded-lg outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Monto (Sale de caja)</label>
+                  <input name="amount" type="number" required className="w-full border p-2 rounded-lg outline-none" />
+                </div>
+                <button disabled={isSubmittingExpense} type="submit" className="w-full bg-red-600 text-white font-bold py-2 rounded-lg hover:bg-red-700 transition disabled:opacity-50">
+                  {isSubmittingExpense ? 'Procesando...' : 'Registrar Gasto'}
+                </button>
+              </form>
+            </div>
+
+          </div>
+
+          {/* Historial de Transacciones */}
+          <div className="lg:col-span-2">
+             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+               <div className="p-6 border-b flex justify-between items-center">
+                 <h2 className="text-xl font-bold text-gray-800">Transacciones Operativas</h2>
+                 <p className="text-sm text-gray-500">Historial reciente de la caja</p>
+               </div>
+               <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left">
+                 <thead className="bg-gray-50 border-b">
+                   <tr>
+                     <th className="px-6 py-4 font-medium text-gray-600">Fecha</th>
+                     <th className="px-6 py-4 font-medium text-gray-600">Detalle</th>
+                     <th className="px-6 py-4 font-medium text-gray-600">Monto</th>
+                     <th className="px-6 py-4 font-medium text-gray-600">Estado</th>
+                     <th className="px-6 py-4 font-medium text-gray-600 text-right">Acción</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y">
+                   {transactions?.map((tx: any, idx: number) => (
+                     <tr key={idx} className="hover:bg-gray-50">
+                       <td className="px-6 py-4 text-gray-500 text-sm">{new Date(tx.date).toLocaleString('es-CO')}</td>
+                       <td className="px-6 py-4 font-medium text-gray-800">{tx.description} <span className="text-xs text-gray-400 block uppercase">{tx.method}</span></td>
+                       <td className={`px-6 py-4 font-bold ${tx.status === 'voided' ? 'text-gray-400 line-through' : tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                          {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
+                       </td>
+                       <td className="px-6 py-4">
+                         {tx.status === 'paid' ? (
+                           <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">Pagado</span>
+                         ) : (
+                           <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold cursor-help" title={`Motivo: ${tx.voidReason}`}>Anulado</span>
+                         )}
+                       </td>
+                       <td className="px-6 py-4 text-right">
+                          {tx.type === 'income' && tx.status === 'paid' && (
+                            <button disabled={isVoidingId === tx.id} onClick={() => handleVoid(tx.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition disabled:opacity-50" title="Anular Factura">
+                              <Ban size={18} />
+                            </button>
+                          )}
+                       </td>
+                     </tr>
+                   ))}
+                   {(!transactions || transactions.length === 0) && (
+                     <tr>
+                       <td colSpan={5} className="text-center py-8 text-gray-500">No hay movimientos recientes</td>
+                     </tr>
+                   )}
+                 </tbody>
+               </table></div>
+             </div>
+          </div>
+        </div>
       )}
 
       {selectedDate && (
