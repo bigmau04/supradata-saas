@@ -2,12 +2,13 @@
 
 import { db } from '@/db';
 import { members, memberSubscriptions, attendances, branches } from '@/db/schema';
-import { eq, or, and } from 'drizzle-orm';
+import { eq, or, and, sql } from 'drizzle-orm';
 import { verifySession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export type AttendanceResult = {
   success: boolean;
+  antiPassbackViolation?: boolean;
   member?: {
     fullName: string;
     documentId: string;
@@ -19,6 +20,19 @@ export type AttendanceResult = {
 export async function registerAttendance(query: string, method: 'qr_scan' | 'manual_doc'): Promise<AttendanceResult> {
   const auth = await verifySession();
   if (!auth) throw new Error('No autorizado');
+
+  let baseQuery = query;
+  if (method === 'qr_scan' && query.includes('-')) {
+    const parts = query.split('-');
+    const timestampPart = parts.pop();
+    baseQuery = parts.join('-');
+    const currentWindow = Math.floor(Date.now() / 45000);
+    const scannedWindow = parseInt(timestampPart || '0', 10);
+    
+    if (scannedWindow < currentWindow - 1 || scannedWindow > currentWindow + 1) {
+       return { success: false, message: 'Código QR Expirado o Inválido. Por favor actualice el carnet digital.' };
+    }
+  }
 
   // Buscar el miembro por cédula o código QR asegurando el gym_id
   const [memberData] = await db
@@ -42,8 +56,8 @@ export async function registerAttendance(query: string, method: 'qr_scan' | 'man
       and(
         eq(members.gymId, auth.session.gymId),
         or(
-          eq(members.documentId, query),
-          eq(members.qrAccessToken, query)
+          eq(members.documentId, baseQuery),
+          eq(members.qrAccessToken, baseQuery)
         )
       )
     )
@@ -61,6 +75,31 @@ export async function registerAttendance(query: string, method: 'qr_scan' | 'man
       success: false, 
       member: { fullName: memberData.fullName, documentId: memberData.documentId, photoUrl: memberData.photoUrl },
       message: 'Membresía Vencida o Inactiva' 
+    };
+  }
+
+  // Anti-passback validation
+  const twoHoursAgo = new Date(Date.now() - 120 * 60 * 1000);
+  const [recentAttendance] = await db
+    .select()
+    .from(attendances)
+    .where(
+      and(
+        eq(attendances.memberId, memberData.id),
+        sql`${attendances.checkIn} >= ${twoHoursAgo.toISOString()}`,
+        sql`${attendances.checkOut} IS NULL`
+      )
+    )
+    .limit(1);
+
+  if (recentAttendance) {
+    const diffMs = Date.now() - new Date(recentAttendance.checkIn).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    return {
+      success: false,
+      antiPassbackViolation: true,
+      member: { fullName: memberData.fullName, documentId: memberData.documentId, photoUrl: memberData.photoUrl },
+      message: `Acceso denegado: El socio ya registró ingreso hace ${diffMins} minutos. Entrada activa en sala.`
     };
   }
 

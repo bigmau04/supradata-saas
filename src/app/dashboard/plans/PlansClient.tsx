@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { createPlan, togglePlanStatus } from '@/app/actions/plans';
-import { Plus, X, CalendarDays, Info } from 'lucide-react';
+import { createPlan, togglePlanStatus, updateMembershipPlan } from '@/app/actions/plans';
+import { Plus, X, CalendarDays, Info, Edit } from 'lucide-react';
 
 export function PlansClient({ initialPlans }: { initialPlans: any[] }) {
   const [plans, setPlans] = useState(initialPlans);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editPlan, setEditPlan] = useState<any>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -16,6 +17,19 @@ export function PlansClient({ initialPlans }: { initialPlans: any[] }) {
     const res = await createPlan(formData);
     if (res?.success) window.location.reload();
     setLoading(false);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    const formData = new FormData(e.currentTarget);
+    const res = await updateMembershipPlan(formData);
+    if (res?.success) {
+      window.location.reload();
+    } else {
+      alert(res?.error || 'Error al actualizar plan');
+      setLoading(false);
+    }
   };
 
   const handleToggle = async (id: string, currentStatus: boolean) => {
@@ -70,9 +84,14 @@ export function PlansClient({ initialPlans }: { initialPlans: any[] }) {
                 </td>
                 <td className="p-4 text-right">
                   {!isSystemPlan && (
-                    <button onClick={() => handleToggle(p.id, p.isActive)} className={`text-sm font-medium hover:underline ${p.isActive ? 'text-red-600' : 'text-blue-600'}`}>
-                      {p.isActive ? 'Desactivar' : 'Activar'}
-                    </button>
+                    <div className="flex items-center justify-end gap-3">
+                      <button onClick={() => setEditPlan(p)} className="text-sm font-medium text-slate-500 hover:text-blue-600 flex items-center gap-1">
+                        <Edit size={16} /> Editar
+                      </button>
+                      <button onClick={() => handleToggle(p.id, p.isActive)} className={`text-sm font-medium hover:underline ${p.isActive ? 'text-red-600' : 'text-blue-600'}`}>
+                        {p.isActive ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>
@@ -109,6 +128,37 @@ export function PlansClient({ initialPlans }: { initialPlans: any[] }) {
               </div>
               <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg mt-6 text-lg">
                 {loading ? 'Guardando...' : 'Crear Plan'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editPlan && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 sm:p-6 relative max-h-[90dvh] overflow-y-auto">
+            <button onClick={() => setEditPlan(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={24} /></button>
+            <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <Edit className="text-blue-600" /> Editar Plan
+            </h2>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <input type="hidden" name="id" value={editPlan.id} />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input name="name" required defaultValue={editPlan.name} className="w-full border-2 p-3 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Duración (días)</label>
+                  <input name="durationDays" type="number" required defaultValue={editPlan.durationDays} className="w-full border-2 p-3 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio ($)</label>
+                  <input name="price" type="number" required defaultValue={editPlan.price} className="w-full border-2 p-3 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none" />
+                </div>
+              </div>
+              <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg mt-6 text-lg">
+                {loading ? 'Guardando...' : 'Guardar Cambios'}
               </button>
             </form>
           </div>

@@ -1,8 +1,9 @@
 import { db } from '@/db';
-import { members, memberSubscriptions, gyms, attendances } from '@/db/schema';
+import { members, memberSubscriptions, gyms, attendances, coaches } from '@/db/schema';
 import { eq, and, sql, isNull } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
-import { QRRenderer } from '@/components/QRRenderer';
+import { DynamicQR } from './DynamicQR';
+import { CoachSelector } from './CoachSelector';
 
 export default async function PassPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -15,6 +16,7 @@ export default async function PassPage({ params }: { params: Promise<{ token: st
       gymName: gyms.name,
       endDate: memberSubscriptions.endDate,
       status: memberSubscriptions.status,
+      coachId: members.coachId,
     })
     .from(members)
     .innerJoin(gyms, eq(members.gymId, gyms.id))
@@ -43,6 +45,8 @@ export default async function PassPage({ params }: { params: Promise<{ token: st
       )
     );
   
+  const gymCoaches = await db.select().from(coaches).where(and(eq(coaches.gymId, memberData.gymId), eq(coaches.isActive, true)));
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-gray-200">
@@ -55,7 +59,7 @@ export default async function PassPage({ params }: { params: Promise<{ token: st
           <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">{memberData.fullName}</h2>
           
           <div className="bg-white p-2 rounded-xl shadow-inner border border-gray-100 mb-6 flex justify-center">
-            <QRRenderer value={memberData.qrToken} size={200} />
+            <DynamicQR baseToken={memberData.qrToken} />
           </div>
           
           <div className="w-full flex justify-between items-center bg-gray-50 p-4 rounded-lg">
@@ -93,8 +97,10 @@ export default async function PassPage({ params }: { params: Promise<{ token: st
                <div className="font-black text-xl">
                  {Number(currentOccupancy)} <span className="text-xs font-normal opacity-70">personas</span>
                </div>
-            </div>
+             </div>
           </div>
+          
+          <CoachSelector token={memberData.qrToken} currentCoachId={memberData.coachId} coaches={gymCoaches} />
         </div>
       </div>
     </div>

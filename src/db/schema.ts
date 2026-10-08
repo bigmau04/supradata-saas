@@ -51,6 +51,9 @@ export const coaches = pgTable('coaches', {
   specialty: varchar('specialty', { length: 100 }),
   scheduleDetails: text('schedule_details'),
   isActive: boolean('is_active').default(true),
+  isClockedIn: boolean('is_clocked_in').default(false).notNull(),
+  lastClockIn: timestamp('last_clock_in', { withTimezone: true }),
+  lastClockOut: timestamp('last_clock_out', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
@@ -63,6 +66,7 @@ export const members = pgTable('members', {
   email: varchar('email', { length: 255 }),
   photoUrl: text('photo_url'),
   qrAccessToken: varchar('qr_access_token', { length: 64 }).unique().notNull(),
+  coachId: uuid('coach_id').references(() => coaches.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   gymIdDocUnique: uniqueIndex('gym_id_doc_idx').on(table.gymId, table.documentId),

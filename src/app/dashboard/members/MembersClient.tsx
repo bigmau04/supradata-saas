@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 import { useState, useTransition } from 'react';
 import { createMember, renewMemberPlan } from '@/app/actions/members';
-import { Search, Plus, MessageCircle, User, AlertTriangle, XOctagon, CheckCircle2, DollarSign, RefreshCw, X, CheckCircle } from 'lucide-react';
+import { Search, Plus, MessageCircle, User, AlertTriangle, XOctagon, CheckCircle2, DollarSign, RefreshCw, X, CheckCircle, QrCode } from 'lucide-react';
 
 // ─── Toast component ──────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
@@ -66,6 +66,19 @@ export function MembersClient({ initialMembers, plans, coaches = [] }: { initial
       text = `Hola! Aqui tienes tu carnet digital de acceso al gimnasio: ${url}`;
     }
     window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const handleResendPass = (member: any) => {
+    if (!member.phone) {
+      showToast('El socio no tiene un teléfono registrado.', 'error');
+      return;
+    }
+    let cleaned = member.phone.replace(/\D/g, '');
+    if (cleaned.length === 10) cleaned = '57' + cleaned;
+    const passUrl = `${window.location.origin}/pass/${member.qrAccessToken}`;
+    const text = `Hola ${member.fullName} 💪, aquí tienes tu carnet digital de acceso al gimnasio: ${passUrl}\n\nPreséntalo en recepción para ingresar.`;
+    window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`, '_blank');
+    showToast('Enlace de carnet generado para WhatsApp', 'success');
   };
 
   async function handleCreate(formData: FormData) {
@@ -188,6 +201,13 @@ export function MembersClient({ initialMembers, plans, coaches = [] }: { initial
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleResendPass(member)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-bold transition"
+                        title="Reenviar Pase"
+                      >
+                        <QrCode className="h-3.5 w-3.5" /> Reenviar Pase
+                      </button>
                       <button
                         onClick={() => setRenewMember(member)}
                         className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition"

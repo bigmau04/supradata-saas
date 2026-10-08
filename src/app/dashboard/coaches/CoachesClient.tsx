@@ -1,10 +1,15 @@
 'use client';
 import { useState } from 'react';
-import { createCoach, toggleCoachStatus } from '@/app/actions/coaches';
-import { Users, Plus, X } from 'lucide-react';
+import { createCoach, toggleCoachStatus, updateCoach } from '@/app/actions/coaches';
+import { Users, Plus, X, Edit } from 'lucide-react';
 
 export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
   const [showModal, setShowModal] = useState(false);
+  const [editCoach, setEditCoach] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [filterActive, setFilterActive] = useState(true);
+
+  const filteredCoaches = initialCoaches.filter(c => c.isActive === filterActive);
 
   return (
     <div className="max-w-6xl mx-auto font-sans">
@@ -21,6 +26,21 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
         </button>
       </div>
 
+      <div className="flex gap-4 mb-6">
+        <button 
+          onClick={() => setFilterActive(true)}
+          className={`px-6 py-2 rounded-full font-bold transition ${filterActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+        >
+          Activos
+        </button>
+        <button 
+          onClick={() => setFilterActive(false)}
+          className={`px-6 py-2 rounded-full font-bold transition ${!filterActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+        >
+          Inactivos / Retirados
+        </button>
+      </div>
+
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left">
           <thead className="bg-gray-50 border-b">
@@ -28,13 +48,15 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
               <th className="px-6 py-4 font-medium text-gray-600">Nombre</th>
               <th className="px-6 py-4 font-medium text-gray-600">Especialidad</th>
               <th className="px-6 py-4 font-medium text-gray-600">Teléfono</th>
+              <th className="px-6 py-4 font-medium text-gray-600 text-center">Alumnos Asignados</th>
+              <th className="px-6 py-4 font-medium text-gray-600 text-center">En Sala</th>
               <th className="px-6 py-4 font-medium text-gray-600">Horario</th>
               <th className="px-6 py-4 font-medium text-gray-600">Estado</th>
               <th className="px-6 py-4 font-medium text-gray-600 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            {initialCoaches.map((coach) => (
+            {filteredCoaches.map((coach) => (
               <tr key={coach.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 font-bold text-gray-800">
                   {coach.fullName}
@@ -42,6 +64,12 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
                 </td>
                 <td className="px-6 py-4 text-gray-600">{coach.specialty}</td>
                 <td className="px-6 py-4 text-gray-600">{coach.phone}</td>
+                <td className="px-6 py-4 text-center">
+                  <span className="font-bold text-lg text-gray-800">{coach.assignedStudents || 0}</span>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <span className="font-bold text-lg text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{coach.inRoomStudents || 0}</span>
+                </td>
                 <td className="px-6 py-4 text-gray-600 text-sm max-w-xs truncate">{coach.scheduleDetails}</td>
                 <td className="px-6 py-4">
                   {coach.isActive ? (
@@ -51,18 +79,25 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
                   )}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button 
-                    onClick={() => toggleCoachStatus(coach.id, coach.isActive)} 
-                    className={`text-sm font-semibold transition ${coach.isActive ? 'text-red-600 hover:text-red-800' : 'text-blue-600 hover:text-blue-800'}`}
-                  >
-                    {coach.isActive ? 'Desactivar' : 'Activar'}
-                  </button>
+                  <div className="flex items-center justify-end gap-3">
+                    <button onClick={() => setEditCoach(coach)} className="text-sm font-medium text-slate-500 hover:text-blue-600 flex items-center gap-1">
+                      <Edit size={16} /> Editar
+                    </button>
+                    <button 
+                      onClick={() => toggleCoachStatus(coach.id, coach.isActive)} 
+                      className={`text-sm font-semibold transition ${coach.isActive ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
+                    >
+                      {coach.isActive ? 'Desactivar' : 'Reactivar Entrenador'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
-            {initialCoaches.length === 0 && (
+            {filteredCoaches.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-gray-500 font-medium">No hay entrenadores registrados.</td>
+                <td colSpan={7} className="text-center py-12 text-gray-500 font-medium">
+                  {filterActive ? 'No hay entrenadores activos.' : 'No hay entrenadores retirados.'}
+                </td>
               </tr>
             )}
           </tbody>
@@ -98,6 +133,38 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
                 <textarea name="scheduleDetails" className="w-full border-2 rounded-xl p-3 outline-none" rows={3}></textarea>
               </div>
               <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-lg mt-4">Guardar Entrenador</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editCoach && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
+            <button onClick={() => setEditCoach(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={24} /></button>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Edit className="text-blue-600" /> Editar Entrenador</h2>
+            <form action={async (formData) => { 
+              setLoading(true);
+              await updateCoach(formData); 
+              setLoading(false);
+              setEditCoach(null); 
+            }} className="space-y-4">
+              <input type="hidden" name="id" value={editCoach.id} />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                <input name="phone" defaultValue={editCoach.phone} className="w-full border-2 rounded-xl p-3 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Especialidad</label>
+                <input name="specialty" defaultValue={editCoach.specialty} className="w-full border-2 rounded-xl p-3 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Horario / Observaciones</label>
+                <textarea name="scheduleDetails" defaultValue={editCoach.scheduleDetails} className="w-full border-2 rounded-xl p-3 outline-none" rows={3}></textarea>
+              </div>
+              <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-lg mt-4 disabled:opacity-50">
+                {loading ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
             </form>
           </div>
         </div>

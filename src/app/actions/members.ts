@@ -13,6 +13,19 @@ export type ActionResult<T = null> =
 
 // --- Queries -----------------------------------------------------------------
 
+export async function updateMemberCoachByToken(token: string, coachId: string | null) {
+  try {
+    await db.update(members)
+      .set({ coachId })
+      .where(eq(members.qrAccessToken, token));
+    revalidatePath(`/pass/${token}`);
+    return { success: true };
+  } catch (err) {
+    console.error('[updateMemberCoachByToken]', err);
+    return { success: false, error: 'Error al actualizar entrenador' };
+  }
+}
+
 export async function getMembers() {
   try {
     const auth = await verifySession();

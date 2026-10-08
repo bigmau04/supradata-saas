@@ -185,12 +185,31 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
       )}
 
       {scanResult ? (
-        <div className={`w-full rounded-3xl shadow-2xl p-6 sm:p-12 flex flex-col items-center justify-center transition-all duration-300 ${scanResult.success ? 'bg-green-500' : 'bg-red-500'} text-white min-h-[400px]`}>
-           <div className="h-32 w-32 rounded-full bg-white/20 flex items-center justify-center text-white mb-6 text-6xl shadow-inner border-4 border-white/30">
-              {scanResult.member?.photoUrl ? <img src={scanResult.member.photoUrl} alt="avatar" className="h-full w-full rounded-full object-cover" /> : <User size={64} />}
+        <div className={`w-full rounded-3xl shadow-2xl p-6 sm:p-12 flex flex-col items-center justify-center transition-all duration-300 ${scanResult.success ? 'bg-green-500' : (scanResult as any).antiPassbackViolation ? 'bg-red-600 animate-pulse' : 'bg-red-500'} text-white min-h-[400px]`}>
+           <div className="h-48 w-48 rounded-full bg-white/20 flex items-center justify-center text-white mb-6 shadow-inner border-4 border-white/30 overflow-hidden">
+              {scanResult.member?.photoUrl ? <img src={scanResult.member.photoUrl} alt="avatar" className="h-full w-full object-cover" /> : <User size={96} />}
            </div>
+           
+           {!scanResult.member?.photoUrl && scanResult.member && (
+             <button className="mb-4 bg-white/20 hover:bg-white/30 px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition">Capturar / Subir Foto</button>
+           )}
+
            <h2 className="text-3xl sm:text-4xl font-extrabold mb-2 text-center break-words max-w-full">{scanResult.member?.fullName || 'Desconocido'}</h2>
-           <p className="text-2xl font-semibold opacity-90 text-center uppercase tracking-widest mt-4 bg-black/20 px-6 py-2 rounded-full">{scanResult.message}</p>
+           <p className="text-lg opacity-80 mb-4 font-mono">{scanResult.member?.documentId}</p>
+           
+           <p className="text-xl font-semibold opacity-90 text-center uppercase tracking-wider mt-2 bg-black/20 px-6 py-3 rounded-2xl w-full max-w-md break-words">
+             {scanResult.message}
+           </p>
+           
+           {scanResult.member && (
+             <div className="mt-6">
+                {scanResult.success ? (
+                  <span className="bg-green-700 text-white px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wider">🟢 Al día</span>
+                ) : (
+                  <span className="bg-red-700 text-white px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wider">🔴 Vencido / Denegado</span>
+                )}
+             </div>
+           )}
         </div>
       ) : (
         <div className="w-full bg-white rounded-3xl shadow-xl p-5 sm:p-8 border border-gray-100">
@@ -222,7 +241,7 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
                </div>
 
                <button disabled={!activeShift && userRole !== 'owner'} onClick={() => setScannerOpen(true)} className="flex items-center justify-center gap-3 w-full max-w-md bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-50 transition-all">
-                 <QrCode size={28} /> Activar Escáner HTML5
+                 <QrCode size={28} /> 📷 Activar Cámara / Escáner QR
                </button>
 
                <button disabled={!activeShift && userRole !== 'owner'} onClick={() => setShowQuickPass(true)} className="flex items-center justify-center gap-3 w-full max-w-md bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-50 transition-all">
