@@ -23,7 +23,7 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
   );
 }
 
-export function ReceptionClient({ coaches = [], products = [], activeShift = null, userRole = 'receptionist' }: { coaches?: any[], products?: any[], activeShift?: any, userRole?: string }) {
+export function ReceptionClient({ coaches = [], products = [], activeShift = null, userRole = 'receptionist', liveMetrics = null }: { coaches?: any[], products?: any[], activeShift?: any, userRole?: string, liveMetrics?: any }) {
   const [inputValue, setInputValue] = useState('');
   const [scanResult, setScanResult] = useState<AttendanceResult | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -102,6 +102,23 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
   return (
     <div className="flex flex-col items-center max-w-4xl mx-auto font-sans gap-6">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      
+      {liveMetrics && (
+        <div className="w-full flex justify-around bg-white px-6 py-4 rounded-3xl shadow-sm border border-gray-100">
+          <div className="text-center">
+            <p className="text-xs text-gray-500 uppercase font-bold">Aforo Sala</p>
+            <p className="text-2xl font-black text-blue-600">{liveMetrics.peopleInGymCount}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-gray-500 uppercase font-bold">Socios Activos</p>
+            <p className="text-2xl font-black text-green-600">{liveMetrics.activeMembersCount}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-gray-500 uppercase font-bold">Por Vencer</p>
+            <p className="text-2xl font-black text-orange-500">{liveMetrics.expiringSoonCount}</p>
+          </div>
+        </div>
+      )}
       
       {/* SHIFT SUMMARY CARD */}
       {activeShift && !scanResult && (

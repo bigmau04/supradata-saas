@@ -109,7 +109,14 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
           <div className="bg-white rounded-3xl shadow-2xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
             <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><X size={24} /></button>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Nuevo Entrenador</h2>
-            <form action={async (formData) => { await createCoach(formData); setShowModal(false); }} className="space-y-4">
+            <form action={async (formData) => { 
+              const res = await createCoach(formData); 
+              if (res?.error) {
+                alert('Error al crear entrenador: ' + res.error);
+              } else {
+                setShowModal(false); 
+              }
+            }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
                 <input name="fullName" required className="w-full border-2 rounded-xl p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition" />
@@ -145,9 +152,13 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Edit className="text-blue-600" /> Editar Entrenador</h2>
             <form action={async (formData) => { 
               setLoading(true);
-              await updateCoach(formData); 
+              const res = await updateCoach(formData); 
               setLoading(false);
-              setEditCoach(null); 
+              if (res?.error) {
+                alert('Error al editar: ' + res.error);
+              } else {
+                setEditCoach(null); 
+              }
             }} className="space-y-4">
               <input type="hidden" name="id" value={editCoach.id} />
               <div>

@@ -43,25 +43,33 @@ export async function getCoaches() {
 }
 
 export async function createCoach(formData: FormData) {
-  const auth = await verifySession();
-  if (!auth) throw new Error('No autorizado');
+  try {
+    const auth = await verifySession();
+    if (!auth) throw new Error('No autorizado');
 
-  const fullName = formData.get('fullName') as string;
-  const documentId = formData.get('documentId') as string;
-  const phone = formData.get('phone') as string;
-  const specialty = formData.get('specialty') as string;
-  const scheduleDetails = formData.get('scheduleDetails') as string;
+    const fullName = formData.get('fullName') as string;
+    const documentId = formData.get('documentId') as string;
+    const phone = formData.get('phone') as string;
+    const specialty = formData.get('specialty') as string;
+    const scheduleDetails = formData.get('scheduleDetails') as string;
 
-  await db.insert(coaches).values({
-    gymId: auth.session.gymId,
-    fullName,
-    documentId,
-    phone,
-    specialty,
-    scheduleDetails
-  });
+    await db.insert(coaches).values({
+      gymId: auth.session.gymId,
+      fullName,
+      documentId,
+      phone,
+      specialty,
+      scheduleDetails,
+      isActive: true,
+      isClockedIn: false
+    });
 
-  revalidatePath('/dashboard/coaches');
+    revalidatePath('/dashboard/coaches');
+    return { success: true };
+  } catch (err: any) {
+    console.error('[createCoach]', err);
+    return { success: false, error: err.message };
+  }
 }
 
 export async function toggleCoachStatus(coachId: string, currentStatus: boolean) {
@@ -76,20 +84,25 @@ export async function toggleCoachStatus(coachId: string, currentStatus: boolean)
 }
 
 export async function updateCoach(formData: FormData) {
-  const auth = await verifySession();
-  if (!auth) throw new Error('No autorizado');
+  try {
+    const auth = await verifySession();
+    if (!auth) throw new Error('No autorizado');
 
-  const id = formData.get('id') as string;
-  const phone = formData.get('phone') as string;
-  const specialty = formData.get('specialty') as string;
-  const scheduleDetails = formData.get('scheduleDetails') as string;
+    const id = formData.get('id') as string;
+    const phone = formData.get('phone') as string;
+    const specialty = formData.get('specialty') as string;
+    const scheduleDetails = formData.get('scheduleDetails') as string;
 
-  await db.update(coaches)
-    .set({ phone, specialty, scheduleDetails })
-    .where(and(eq(coaches.id, id), eq(coaches.gymId, auth.session.gymId)));
+    await db.update(coaches)
+      .set({ phone, specialty, scheduleDetails })
+      .where(and(eq(coaches.id, id), eq(coaches.gymId, auth.session.gymId)));
 
-  revalidatePath('/dashboard/coaches');
-  return { success: true };
+    revalidatePath('/dashboard/coaches');
+    return { success: true };
+  } catch (err: any) {
+    console.error('[updateCoach]', err);
+    return { success: false, error: err.message };
+  }
 }
 
 export async function toggleCoachShift(coachId: string) {

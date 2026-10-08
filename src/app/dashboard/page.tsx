@@ -1,9 +1,10 @@
-import { getDashboardMetrics } from '@/app/actions/dashboard';
+import { getDashboardMetrics, getGymLiveMetrics } from '@/app/actions/dashboard';
 import { DollarSign, Activity, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function DashboardPage() {
   const metrics = await getDashboardMetrics();
+  const liveMetrics = await getGymLiveMetrics();
 
   const formatMoney = (val: number | string) => {
     const num = Number(val) || 0;
@@ -34,9 +35,28 @@ export default async function DashboardPage() {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
           <div className="p-4 bg-purple-100 text-purple-600 rounded-xl"><Activity size={32} /></div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Aforo de Hoy</p>
+            <p className="text-sm text-gray-500 font-medium">Asistencias Hoy</p>
             <p className="text-3xl font-bold text-gray-800">{metrics.attendancesToday} <span className="text-sm font-normal text-gray-500">accesos</span></p>
           </div>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-bold mb-6 text-gray-800">Métricas en Vivo</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
+          <span className="text-sm text-gray-500 font-medium uppercase tracking-wider">Aforo Actual</span>
+          <p className="text-4xl font-black text-blue-600">{liveMetrics.peopleInGymCount}</p>
+          <p className="text-sm text-gray-400">Personas entrenando ahora</p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
+          <span className="text-sm text-gray-500 font-medium uppercase tracking-wider">Socios Activos</span>
+          <p className="text-4xl font-black text-green-600">{liveMetrics.activeMembersCount}</p>
+          <p className="text-sm text-gray-400">Planes vigentes</p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
+          <span className="text-sm text-gray-500 font-medium uppercase tracking-wider">Próximos a Vencer</span>
+          <p className="text-4xl font-black text-orange-500">{liveMetrics.expiringSoonCount}</p>
+          <p className="text-sm text-gray-400">Vencen en &le; 5 días</p>
         </div>
       </div>
 

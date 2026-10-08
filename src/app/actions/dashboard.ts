@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/db';
-import { payments, expenses, attendances } from '@/db/schema';
+import { payments, expenses, attendances, members, memberSubscriptions } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { verifySession } from '@/lib/auth';
 
@@ -40,4 +40,41 @@ export async function getDashboardMetrics() {
     monthBalance,
     attendancesToday: Number(attendancesToday || 0)
   };
+}
+
+export async function getGymLiveMetrics() {
+  try {
+    const auth = await verifySession();
+    if (!auth) throw new Error('No autorizado');
+
+    const gymId = auth.session.gymId;
+    const now = new Date();
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const inFiveDays = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+
+    const [{ activeMembersCount }] = await db.select({
+      activeMembersCount: sql<number>`COALESCE(COUNT(DISTINCT ${members.id}), 0)`.mapWith(Number)
+    })
+    .from(members)
+    .innerJoin(memberSubscriptions, eq(memberSubscriptions.memberId, members.id))
+    .where(and(eq(members.gymId, gymId), eq(memberSubscriptions.status, 'active'), sql`${memberSubscriptions.endDate} >= CURRENT_DATE`));
+
+    const [{ peopleInGymCount }] = await db.select({
+      peopleInGymCount: sql<number>`COALESCE(COUNT(*), 0)`.mapWith(Number)
+    })
+    .from(attendances)
+    .where(and(eq(attendances.gymId, gymId), sql`${attendances.checkIn} >= ${twoHoursAgo.toISOString()}`, sql`${attendances.checkOut} IS NULL`));
+
+    const [{ expiringSoonCount }] = await db.select({
+      expiringSoonCount: sql<number>`COALESCE(COUNT(*), 0)`.mapWith(Number)
+    })
+    .from(memberSubscriptions)
+    .innerJoin(members, eq(members.id, memberSubscriptions.memberId))
+    .where(and(eq(members.gymId, gymId), eq(memberSubscriptions.status, 'active'), sql`${memberSubscriptions.endDate} BETWEEN CURRENT_DATE AND ${inFiveDays.toISOString()}`));
+
+    return { success: true, activeMembersCount, peopleInGymCount, expiringSoonCount };
+  } catch (err: any) {
+    console.error('[getGymLiveMetrics]', err);
+    return { success: false, activeMembersCount: 0, peopleInGymCount: 0, expiringSoonCount: 0 };
+  }
 }
