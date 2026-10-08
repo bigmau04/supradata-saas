@@ -6,7 +6,7 @@ import { registerAttendance, AttendanceResult } from '@/app/actions/attendance';
 import { registerQuickPass } from '@/app/actions/quickPass';
 import { sellProduct } from '@/app/actions/products';
 import { openShift, closeShift, registerMinorExpense } from '@/app/actions/cash_shifts';
-import { User, QrCode, Keyboard, DollarSign, X, ShoppingCart, Lock, Unlock, MinusCircle, Wallet, AlertTriangle, CheckCircle } from 'lucide-react';
+import { User, QrCode, Keyboard, DollarSign, X, ShoppingCart, Lock, Unlock, MinusCircle, Wallet, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
   return (
@@ -520,15 +520,20 @@ import { registerWalkInMember } from '@/app/actions/members';
 function WalkInRegisterForm({ plans, onClose, onSuccess }: { plans: any[], onClose: () => void, onSuccess: (data: any) => void }) {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const startCamera = async () => {
+  const startCamera = async (mode = facingMode) => {
     try {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const currentStream = videoRef.current.srcObject as MediaStream;
+        currentStream.getTracks().forEach(track => track.stop());
+      }
       setCameraActive(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: mode }, width: 720, height: 720 } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
@@ -611,7 +616,20 @@ function WalkInRegisterForm({ plans, onClose, onSuccess }: { plans: any[], onClo
                {photoUrl ? (
                  <img src={photoUrl} className="w-full h-full object-cover" alt="Socio" />
                ) : cameraActive ? (
-                 <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+                 <>
+                   <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+                   <button 
+                     type="button" 
+                     onClick={() => {
+                       const newMode = facingMode === 'user' ? 'environment' : 'user';
+                       setFacingMode(newMode);
+                       startCamera(newMode);
+                     }}
+                     className="absolute top-2 right-2 z-20 bg-black/60 text-white p-1.5 rounded-full backdrop-blur-md hover:bg-black/80 transition"
+                   >
+                     <RefreshCw size={16} />
+                   </button>
+                 </>
                ) : (
                  <User className="text-gray-300" size={64} />
                )}
@@ -625,7 +643,7 @@ function WalkInRegisterForm({ plans, onClose, onSuccess }: { plans: any[], onClo
                </div>
              ) : (
                <div className="flex flex-col gap-2 w-full">
-                 <button type="button" onClick={startCamera} className="bg-blue-50 text-blue-600 hover:bg-blue-100 transition text-sm font-bold px-4 py-2 rounded-xl border border-blue-200 flex items-center justify-center gap-2">
+                 <button type="button" onClick={() => startCamera()} className="bg-blue-50 text-blue-600 hover:bg-blue-100 transition text-sm font-bold px-4 py-2 rounded-xl border border-blue-200 flex items-center justify-center gap-2">
                     📸 Abrir Cámara
                  </button>
                  <label className="bg-gray-100 hover:bg-gray-200 cursor-pointer transition text-gray-600 text-sm font-bold px-4 py-2 rounded-xl text-center">
