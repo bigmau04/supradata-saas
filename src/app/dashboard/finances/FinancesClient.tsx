@@ -126,7 +126,7 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
             <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-bold text-gray-800 mb-6">Tendencia de Ingresos</h3>
               {overview.chartData.length > 0 ? (
-                <div className="min-h-[260px] w-full relative flex items-end gap-2 overflow-x-auto pb-2">
+                <div className="h-[260px] w-full relative flex items-end gap-2 overflow-x-auto pb-2">
                   {(() => {
                     const start = new Date(overview.chartData[0].date + 'T12:00:00');
                     const end = new Date(overview.chartData[overview.chartData.length - 1].date + 'T12:00:00');
@@ -138,7 +138,8 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
                     }
                     const max = filled.length > 0 ? Math.max(...filled.map(x => Number(x.total) || 0)) : 0;
                     return filled.map((d: any) => {
-                      const height = max > 0 ? (d.total / max) * 100 : 0;
+                      const totalVal = Number(d.total) || 0;
+                      const height = max > 0 ? (totalVal / max) * 100 : 0;
                       return (
                         <div key={d.date} className="flex-1 min-w-[30px] flex flex-col items-center group relative cursor-pointer h-full justify-end" onClick={() => loadBreakdown(d.date)}>
                           <div className="w-full bg-blue-600 rounded-t relative hover:bg-blue-400 transition-all" style={{ height: `${height}%`, minHeight: height > 0 ? '4px' : '0' }}>
