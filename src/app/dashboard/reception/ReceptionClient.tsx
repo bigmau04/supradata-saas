@@ -23,12 +23,13 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
   );
 }
 
-export function ReceptionClient({ coaches = [], products = [], activeShift = null, userRole = 'receptionist', liveMetrics = null }: { coaches?: any[], products?: any[], activeShift?: any, userRole?: string, liveMetrics?: any }) {
+export function ReceptionClient({ coaches = [], products = [], plans = [], activeShift = null, userRole = 'receptionist', liveMetrics = null }: { coaches?: any[], products?: any[], plans?: any[], activeShift?: any, userRole?: string, liveMetrics?: any }) {
   const [inputValue, setInputValue] = useState('');
   const [scanResult, setScanResult] = useState<AttendanceResult | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [showQuickPass, setShowQuickPass] = useState(false);
   const [showStore, setShowStore] = useState(false);
+  const [showWalkInRegister, setShowWalkInRegister] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
   const [showOpenShift, setShowOpenShift] = useState(!activeShift && userRole !== 'owner');
@@ -87,8 +88,10 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
     try {
       const res = await registerAttendance(query, method);
       setScanResult(res);
+      setInputValue('');
     } catch (e) {
       setScanResult({ success: false, message: 'Error de servidor' });
+      setInputValue('');
     }
   };
 
@@ -202,9 +205,16 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
       )}
 
       {scanResult ? (
-        <div className={`w-full rounded-3xl shadow-2xl p-6 sm:p-12 flex flex-col items-center justify-center transition-all duration-300 ${scanResult.success ? 'bg-green-500' : (scanResult as any).antiPassbackViolation ? 'bg-red-600 animate-pulse' : 'bg-red-500'} text-white min-h-[400px]`}>
-           <div className="h-48 w-48 rounded-full bg-white/20 flex items-center justify-center text-white mb-6 shadow-inner border-4 border-white/30 overflow-hidden">
-              {scanResult.member?.photoUrl ? <img src={scanResult.member.photoUrl} alt="avatar" className="h-full w-full object-cover" /> : <User size={96} />}
+        <div className={`w-full rounded-3xl shadow-2xl p-6 sm:p-12 flex flex-col items-center justify-center transition-all duration-300 ${scanResult.success ? 'bg-green-500' : (scanResult as any).antiPassbackViolation ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'} text-white min-h-[400px]`}>
+           <div className={`h-[150px] w-[150px] rounded-full bg-white/20 flex items-center justify-center text-white mb-6 shadow-inner border-4 ${scanResult.success ? 'border-green-300' : (scanResult as any).antiPassbackViolation ? 'border-yellow-300' : 'border-red-300'} overflow-hidden relative`}>
+              {scanResult.member?.photoUrl ? (
+                <img src={scanResult.member.photoUrl} alt="avatar" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center justify-center w-full h-full bg-gray-200 text-gray-400">
+                   <User size={80} />
+                   <div className="absolute bottom-4 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-bold flex items-center gap-1">⚠️ Sin Foto</div>
+                </div>
+              )}
            </div>
            
            {!scanResult.member?.photoUrl && scanResult.member && (
@@ -221,9 +231,11 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
            {scanResult.member && (
              <div className="mt-6">
                 {scanResult.success ? (
-                  <span className="bg-green-700 text-white px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wider">🟢 Al día</span>
+                  <span className="bg-green-700 text-white px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wider shadow-lg">🟢 ACCESO PERMITIDO</span>
+                ) : (scanResult as any).antiPassbackViolation ? (
+                  <span className="bg-yellow-600 text-white px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wider shadow-lg">🟡 INGRESO DUPLICADO</span>
                 ) : (
-                  <span className="bg-red-700 text-white px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wider">🔴 Vencido / Denegado</span>
+                  <span className="bg-red-700 text-white px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wider shadow-lg">🔴 ACCESO DENEGADO</span>
                 )}
              </div>
            )}
@@ -237,25 +249,41 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
 
           {!scannerOpen ? (
             <div className="flex flex-col items-center gap-6">
-               <div className="relative w-full max-w-md">
-                 <Keyboard className="absolute left-5 top-4 text-gray-400 h-6 w-6" />
+               <form 
+                 onSubmit={async (e) => {
+                   e.preventDefault();
+                   if (!inputValue) return;
+                   await handleValidation(inputValue, 'manual_doc');
+                 }}
+                 className="relative w-full max-w-md flex items-center"
+               >
+                 <Keyboard className="absolute left-5 text-gray-400 h-6 w-6" />
                  <input 
                    ref={inputRef}
                    value={inputValue}
                    onChange={(e) => setInputValue(e.target.value)}
-                   onKeyDown={handleKeyDown}
                    placeholder="Pistola USB / Digitar cédula..."
-                 className="w-full pl-14 pr-4 py-4 text-xl border-2 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition shadow-sm bg-gray-50 focus:bg-white"
+                   className="w-full pl-14 pr-28 py-4 text-xl border-2 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition shadow-sm bg-gray-50 focus:bg-white"
                    disabled={!activeShift && userRole !== 'owner'}
                  />
-                 <div className="absolute right-4 top-3.5 text-xs font-bold text-gray-400 bg-gray-200 px-2 py-1 rounded">ENTER</div>
-               </div>
+                 <button 
+                   type="submit" 
+                   disabled={!inputValue || (!activeShift && userRole !== 'owner')}
+                   className="absolute right-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-medium px-4 py-2.5 rounded-xl text-sm flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+                 >
+                   Buscar
+                 </button>
+               </form>
                
-               <div className="flex items-center gap-4 text-gray-400 w-full max-w-md">
+               <div className="flex items-center gap-4 text-gray-400 w-full max-w-md mt-2">
                   <div className="h-px bg-gray-200 flex-1"></div>
                   <span className="text-sm font-semibold uppercase tracking-wider">Operaciones</span>
                   <div className="h-px bg-gray-200 flex-1"></div>
                </div>
+
+               <button disabled={!activeShift && userRole !== 'owner'} onClick={() => setShowWalkInRegister(true)} className="flex items-center justify-center gap-3 w-full max-w-md bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-50 transition-all shadow-md">
+                 👤 + Registrar Nuevo Socio
+               </button>
 
                <button disabled={!activeShift && userRole !== 'owner'} onClick={() => setScannerOpen(true)} className="flex items-center justify-center gap-3 w-full max-w-md bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-50 transition-all">
                  <QrCode size={28} /> 📷 Activar Cámara / Escáner QR
@@ -452,6 +480,211 @@ export function ReceptionClient({ coaches = [], products = [], activeShift = nul
           </div>
         </div>
       )}
+      {showWalkInRegister && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full relative max-h-[95dvh] flex flex-col overflow-hidden">
+            <div className="p-5 sm:p-8 border-b relative">
+              <button onClick={() => setShowWalkInRegister(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600"><X size={24} /></button>
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">👤 Registro Rápido</h2>
+              <p className="text-sm text-gray-500 mt-1">Crea un socio y registra su primer pago de inmediato.</p>
+            </div>
+            
+            <WalkInRegisterForm 
+              plans={plans} 
+              onClose={() => setShowWalkInRegister(false)} 
+              onSuccess={(data) => {
+                setShowWalkInRegister(false);
+                const msg = encodeURIComponent(`¡Hola ${data.fullName}! Tu registro en SupraData fue exitoso. Accede a tu carnet digital aquí: ${window.location.origin}/pass/${data.passToken}`);
+                const whatsappUrl = `https://wa.me/57${data.phone}?text=${msg}`;
+                
+                showToast('Socio registrado correctamente.', 'success');
+                
+                const w = window.open(whatsappUrl, '_blank');
+                if(!w) alert('El navegador bloqueó la ventana emergente de WhatsApp. Por favor ábrela manualmente.');
+                
+                setTimeout(() => window.location.reload(), 2000);
+              }} 
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------------------
+// COMPONENTE SECUNDARIO PARA EL FORMULARIO DE REGISTRO RÁPIDO CON CÁMARA
+// --------------------------------------------------------------------------------------
+import { registerWalkInMember } from '@/app/actions/members';
+
+function WalkInRegisterForm({ plans, onClose, onSuccess }: { plans: any[], onClose: () => void, onSuccess: (data: any) => void }) {
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const startCamera = async () => {
+    try {
+      setCameraActive(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+    } catch (err) {
+      console.error('Error starting camera', err);
+      alert('No se pudo acceder a la cámara. Asegúrate de dar permisos.');
+      setCameraActive(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setCameraActive(false);
+  };
+
+  const takePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      const size = Math.min(video.videoWidth, video.videoHeight);
+      const startX = (video.videoWidth - size) / 2;
+      const startY = (video.videoHeight - size) / 2;
+
+      canvas.width = 800;
+      canvas.height = 800;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, startX, startY, size, size, 0, 0, 800, 800);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setPhotoUrl(dataUrl);
+        stopCamera();
+      }
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => setPhotoUrl(event.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (formData: FormData) => {
+    setIsSubmitting(true);
+    setErrorMsg('');
+    if (photoUrl) {
+      formData.append('photoUrl', photoUrl);
+    }
+    
+    const res = await registerWalkInMember(formData);
+    setIsSubmitting(false);
+    
+    if (res.success && res.data) {
+      onSuccess(res.data);
+    } else {
+      setErrorMsg(!res.success ? res.error : 'Ocurrió un error inesperado');
+    }
+  };
+
+  useEffect(() => {
+    return () => stopCamera();
+  }, []);
+
+  return (
+    <div className="flex-1 overflow-y-auto p-5 sm:p-8">
+      {errorMsg && <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 font-bold text-sm border border-red-200">{errorMsg}</div>}
+      
+      <form action={handleSubmit} className="space-y-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* LADO IZQUIERDO: FOTO ANTIFRAUDE */}
+          <div className="flex flex-col items-center gap-4 w-full md:w-1/3">
+             <div className="w-40 h-40 bg-gray-100 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 relative flex items-center justify-center">
+               {photoUrl ? (
+                 <img src={photoUrl} className="w-full h-full object-cover" alt="Socio" />
+               ) : cameraActive ? (
+                 <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+               ) : (
+                 <User className="text-gray-300" size={64} />
+               )}
+               <canvas ref={canvasRef} className="hidden" />
+             </div>
+             
+             {cameraActive ? (
+               <div className="flex gap-2">
+                 <button type="button" onClick={takePhoto} className="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl">📸 Capturar</button>
+                 <button type="button" onClick={stopCamera} className="bg-gray-200 text-gray-700 text-xs font-bold px-4 py-2 rounded-xl">Cancelar</button>
+               </div>
+             ) : (
+               <div className="flex flex-col gap-2 w-full">
+                 <button type="button" onClick={startCamera} className="bg-blue-50 text-blue-600 hover:bg-blue-100 transition text-sm font-bold px-4 py-2 rounded-xl border border-blue-200 flex items-center justify-center gap-2">
+                    📸 Abrir Cámara
+                 </button>
+                 <label className="bg-gray-100 hover:bg-gray-200 cursor-pointer transition text-gray-600 text-sm font-bold px-4 py-2 rounded-xl text-center">
+                    Subir Archivo
+                    <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                 </label>
+               </div>
+             )}
+             {photoUrl && (
+               <button type="button" onClick={() => setPhotoUrl(null)} className="text-red-500 text-xs font-bold hover:underline">Eliminar foto</button>
+             )}
+          </div>
+
+          {/* LADO DERECHO: DATOS */}
+          <div className="w-full md:w-2/3 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+              <input name="fullName" required className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej. Juan Pérez" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cédula / Doc.</label>
+                <input name="documentId" required className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej. 10203040" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
+                <input name="phone" required type="tel" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej. 3001234567" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                <select name="planId" required className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                  <option value="">Selecciona...</option>
+                  {plans.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} - ${Number(p.price).toLocaleString('es-CO')}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
+                <select name="method" required className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                  <option value="cash">💵 Efectivo</option>
+                  <option value="transfer">🏦 Transferencia</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
+           <button type="button" onClick={onClose} className="px-6 py-3 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition">Cancelar</button>
+           <button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-8 py-3 rounded-xl font-bold transition shadow-md">
+             {isSubmitting ? 'Guardando...' : 'Crear Socio y Cobrar'}
+           </button>
+        </div>
+      </form>
     </div>
   );
 }

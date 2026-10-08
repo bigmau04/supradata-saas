@@ -271,3 +271,74 @@ export async function renewMemberPlan(formData: FormData): Promise<ActionResult>
     return { success: false, error: 'Error al procesar la renovacion. Por favor intenta de nuevo.' };
   }
 }
+
+export async function registerWalkInMember(formData: FormData): Promise<ActionResult<{ passToken: string, fullName: string, phone: string }>> {
+  try {
+    const auth = await verifySession();
+    if (!auth) return { success: false, error: 'No autorizado.' };
+
+    const fullName = (formData.get('fullName') as string)?.trim();
+    const documentId = (formData.get('documentId') as string)?.trim();
+    const phone = (formData.get('phone') as string)?.trim();
+    const planId = formData.get('planId') as string;
+    const method = formData.get('method') as 'cash' | 'transfer';
+    const photoUrl = formData.get('photoUrl') as string | null;
+
+    if (!fullName || !documentId || !phone || !planId || !method) {
+      return { success: false, error: 'Todos los campos son obligatorios.' };
+    }
+
+    const [branch] = await db.select().from(branches).where(eq(branches.gymId, auth.session.gymId)).limit(1);
+    const [plan] = await db.select().from(membershipPlans).where(eq(membershipPlans.id, planId));
+    if (!branch || !plan) return { success: false, error: 'Error de configuración. Plan o Sucursal no encontrados.' };
+
+    const qrAccessToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomBytes(4).toString('hex');
+
+    const [newMember] = await db.insert(members).values({
+      gymId: auth.session.gymId,
+      fullName,
+      documentId,
+      phone,
+      qrAccessToken,
+      photoUrl,
+    }).returning();
+
+    const startDate = new Date();
+    const endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + plan.durationDays);
+    const startStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+    const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+
+    const [newSub] = await db.insert(memberSubscriptions).values({
+      gymId: auth.session.gymId,
+      branchId: branch.id,
+      memberId: newMember.id,
+      planId: plan.id,
+      startDate: startStr,
+      endDate: endStr,
+      status: 'active',
+      notes: 'Registro Rápido',
+    }).returning();
+
+    await db.insert(payments).values({
+      gymId: auth.session.gymId,
+      branchId: branch.id,
+      memberId: newMember.id,
+      subscriptionId: newSub.id,
+      concept: 'membership',
+      amount: plan.price,
+      method,
+      status: 'paid',
+      registeredByUserId: auth.session.userId,
+    });
+
+    revalidatePath('/dashboard/reception');
+    return { success: true, data: { passToken: newMember.qrAccessToken, fullName: newMember.fullName, phone: newMember.phone } };
+  } catch (err: any) {
+    console.error('[registerWalkInMember]', err);
+    if (err?.code === '23505' || String(err?.message).includes('duplicate') || String(err?.message).includes('unique')) {
+      return { success: false, error: 'Ya existe un socio con ese número de documento.' };
+    }
+    return { success: false, error: 'Error al registrar el socio.' };
+  }
+}
+
