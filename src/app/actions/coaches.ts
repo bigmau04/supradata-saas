@@ -23,22 +23,22 @@ export async function getCoaches() {
     isClockedIn: coaches.isClockedIn,
     lastClockIn: coaches.lastClockIn,
     lastClockOut: coaches.lastClockOut,
-    assignedStudents: sql<number>`(
+    assignedStudents: sql<number>`COALESCE((
       SELECT COUNT(DISTINCT m.id) 
       FROM ${members} m
       JOIN ${memberSubscriptions} ms ON ms.member_id = m.id
       WHERE m.coach_id = ${coaches.id} 
         AND ms.status = 'active' 
         AND ms.end_date >= CURRENT_DATE
-    )`.mapWith(Number),
-    inRoomStudents: sql<number>`(
+    ), 0)`.mapWith(Number),
+    inRoomStudents: sql<number>`COALESCE((
       SELECT COUNT(DISTINCT m.id) 
       FROM ${members} m
       JOIN ${attendances} a ON a.member_id = m.id
       WHERE m.coach_id = ${coaches.id} 
         AND a.check_in >= ${twoHoursAgo.toISOString()}
         AND a.check_out IS NULL
-    )`.mapWith(Number)
+    ), 0)`.mapWith(Number)
   }).from(coaches).where(eq(coaches.gymId, auth.session.gymId));
 }
 
