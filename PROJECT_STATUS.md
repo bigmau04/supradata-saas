@@ -23,28 +23,32 @@ Aislamiento Multi-tenant estricto mediante `gym_id` en todas las consultas de le
 
 ## 3. Flujos Implementados y Validados
 - **Onboarding Multi-tenant (`/register`, `/login`):** Registro transaccional de gimnasio con NIT/Cédula, sede, admin y plan base "Pase Diario Exprés".
-- **Gestión de Planes (`/dashboard/plans`):** Catálogo comercial configurable por el administrador.
+- **Gestión de Planes y Miembros (`/dashboard/plans`, `/dashboard/members`):**
+  - Catálogo comercial configurable por el administrador.
+  - Dashboard accionable de miembros con cálculo en vivo de "Socio en Riesgo" (Saludable, Riesgo, Crítico) y Dinero en Riesgo.
+  - Flujo unificado de Renovación/Cambio de Plan con asignación de entrenador para comisiones y manejo limpio de fechas (cancelación de planes anteriores para evitar solapamientos).
+  - Botón de contacto rápido por WhatsApp con mensajes dinámicos (reactivación, renovación, envío de carnet).
 - **Recepción & Mostrador (`/dashboard/reception`):**
-  - Control de caja por turnos (apertura obligatoria para recepcionista, opcional para admin).
-  - Tienda rápida con multiplicador reactivo de cantidades y cobro directo a caja.
+  - Control de caja por turnos (apertura obligatoria para recepcionista, opcional para admin). Manejo de gastos menores.
+  - Tienda rápida interactiva (Venta de Mostrador).
   - Check-in por escáner QR o cédula, y pase exprés de 1 clic.
+- **Catálogo de Productos (`/dashboard/products`):**
+  - Creación, activación/desactivación y edición rápida (nombre y precio) de productos (solo Admin/Owner).
+- **Seguridad y Robustez Técnica:**
+  - Protección de rutas middleware (RBAC: Recepcionistas limitados a su módulo).
+  - Blindaje completo de Server Actions con manejo estructurado de errores y notificaciones interactivas (Toasts), garantizando cero caídas "500".
 - **Carnet Digital Público (`/pass/[token]`):** QR de acceso y tarjeta de aforo en vivo semafórica (últimas 2 horas) sin requerir app nativa.
 
 ## 4. Hoja de Ruta Priorizada (Roadmap por Fases)
 
-### Fase 1: Integridad Operativa & Blindaje Financiero (Inmediato)
-- **Inmutabilidad de Pagos:** Prohibir borrado físico (`DELETE`). Manejar estado `voided` con motivo y auditoría (`void_reason`, `voided_by`, `voided_at`).
-- **Idempotencia:** Prevenir cobros dobles por doble clic o latencia en cobros de membresía y ventas de mostrador.
-- **Audit Logs (`audit_logs`):** Trazabilidad de acciones sensibles (anulaciones de cobro, cambios de precio en planes, cierres de caja con descuadre).
+### Fase 1: Integridad Operativa & Audit Logs (Próximos pasos)
+- **Histórico de Arqueos:** Vista gerencial para que el administrador audite turnos pasados y descuadres de caja por recepcionista (actualmente solo se ve el turno activo).
+- **Idempotencia:** Prevenir cobros dobles por doble clic o latencia en transacciones.
+- **Audit Logs (`audit_logs`):** Trazabilidad detallada de acciones sensibles (anulaciones de cobro, cambios de precio en planes, cierres de caja con descuadre).
 
-### Fase 2: Motor de Retención & Dashboard Accionable (Diferenciador SaaS)
-- **Cálculo de "Socio en Riesgo" (Churn Score Simple):**
-  - 🟢 Saludable: Asistencia regular + membresía vigente > 7 días.
-  - 🟡 Riesgo: Asistencia cayendo o vence en ≤ 7 días.
-  - 🔴 Crítico: Sin asistencia > 7 días y vencimiento inmediato o vencido.
-- **Botón de Contacto Rápido:** Enlace directo a WhatsApp (`https://wa.me/...`) con plantilla dinámica de reactivación/renovación sin costos de API.
-- **Tarjeta de "Revenue en Riesgo":** Total en dinero acumulado por socios en riesgo de no renovar vs. recuperables hoy.
-- **Histórico de Arqueos:** Vista gerencial para que el administrador audite turnos y descuadres de caja por recepcionista.
+### Fase 2: SupraPass & Mini-Portal del Socio
+- Expansión de `/pass/[token]` a mini-app web: consulta de histórico de asistencia, vencimiento de plan y botón de solicitud de renovación por WhatsApp.
+- Gestión básica de horarios y reservas de clases grupales para controlar aforo y métrica de *no-show*.
 
 ### Fase 3: SupraPass & Mini-Portal del Socio
 - Expansión de `/pass/[token]` a mini-app web: consulta de histórico de asistencia, vencimiento de plan y botón de solicitud de renovación por WhatsApp.
