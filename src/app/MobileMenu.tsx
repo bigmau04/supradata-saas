@@ -6,11 +6,21 @@ import { ArrowRight, Menu, X } from "lucide-react";
 
 type NavLink = { href: string; label: string };
 
+interface MobileMenuProps {
+  links: NavLink[];
+  registerLabel?: string;
+  loginLabel?: string;
+}
+
 /**
  * Menú móvil de la landing: panel a todo el ancho bajo la barra, con fondo
  * difuminado, que se cierra al tocar un enlace, el fondo o con Escape.
  */
-export default function MobileMenu({ links }: { links: NavLink[] }) {
+export default function MobileMenu({
+  links,
+  registerLabel = "Registrar Mi Gimnasio",
+  loginLabel = "Acceso Personal",
+}: MobileMenuProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -70,14 +80,14 @@ export default function MobileMenu({ links }: { links: NavLink[] }) {
                 onClick={() => setOpen(false)}
                 className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3.5 text-base font-semibold text-white shadow-sm active:bg-blue-700"
               >
-                Crear Gimnasio Gratis <ArrowRight className="h-4 w-4" />
+                {registerLabel} <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
                 className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-base font-semibold text-slate-800 active:bg-slate-50"
               >
-                Iniciar Sesión
+                {loginLabel}
               </Link>
             </div>
           </nav>
