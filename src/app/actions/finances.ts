@@ -107,12 +107,14 @@ export async function getRevenueRecoveryData() {
       endDate: memberSubscriptions.endDate,
       status: memberSubscriptions.status,
       planName: membershipPlans.name,
-      planPrice: membershipPlans.price
+      planPrice: membershipPlans.price,
+      durationDays: membershipPlans.durationDays
     }).from(members)
     .innerJoin(memberSubscriptions, eq(memberSubscriptions.memberId, members.id))
     .innerJoin(membershipPlans, eq(membershipPlans.id, memberSubscriptions.planId))
     .where(and(
       eq(members.gymId, gymId),
+      sql`${membershipPlans.durationDays} > 7`,
       or(
         and(eq(memberSubscriptions.status, 'expired'), sql`${memberSubscriptions.endDate} >= ${fifteenDaysAgo.toISOString()}`),
         and(eq(memberSubscriptions.status, 'active'), sql`${memberSubscriptions.endDate} <= ${inFiveDays.toISOString()}`)

@@ -9,6 +9,7 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
   const [overview, setOverview] = useState<any>(null);
   const [recoveryData, setRecoveryData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [recoveryFilter, setRecoveryFilter] = useState<'all' | 'monthly' | 'yearly'>('all');
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [breakdownData, setBreakdownData] = useState<any[]>([]);
@@ -125,23 +126,33 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
             <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-bold text-gray-800 mb-6">Tendencia de Ingresos</h3>
               {overview.chartData.length > 0 ? (
-                <div className="h-64 flex items-end gap-2 overflow-x-auto pb-2">
-                  {overview.chartData.map((d: any) => {
-                    const max = Math.max(...overview.chartData.map((x: any) => x.total));
-                    const height = max > 0 ? (d.total / max) * 100 : 0;
-                    return (
-                      <div key={d.date} className="flex-1 min-w-[30px] flex flex-col items-center group relative cursor-pointer" onClick={() => loadBreakdown(d.date)}>
-                        <div className="w-full bg-blue-100 rounded-t-sm relative hover:bg-blue-400 transition-all" style={{ height: `${height}%` }}>
-                          <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 transition-opacity pointer-events-none">
-                            {formatMoney(d.total)}
+                <div className="min-h-[260px] w-full relative flex items-end gap-2 overflow-x-auto pb-2">
+                  {(() => {
+                    const start = new Date(overview.chartData[0].date + 'T12:00:00');
+                    const end = new Date(overview.chartData[overview.chartData.length - 1].date + 'T12:00:00');
+                    const map = new Map(overview.chartData.map((d:any) => [d.date, d.total]));
+                    const filled = [];
+                    for (let c = new Date(start); c <= end; c.setDate(c.getDate() + 1)) {
+                      const dStr = c.toISOString().split('T')[0];
+                      filled.push({ date: dStr, total: map.get(dStr) || 0 });
+                    }
+                    const max = filled.length > 0 ? Math.max(...filled.map(x => Number(x.total) || 0)) : 0;
+                    return filled.map((d: any) => {
+                      const height = max > 0 ? (d.total / max) * 100 : 0;
+                      return (
+                        <div key={d.date} className="flex-1 min-w-[30px] flex flex-col items-center group relative cursor-pointer h-full justify-end" onClick={() => loadBreakdown(d.date)}>
+                          <div className="w-full bg-blue-600 rounded-t relative hover:bg-blue-400 transition-all" style={{ height: `${height}%`, minHeight: height > 0 ? '4px' : '0' }}>
+                            <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 transition-opacity pointer-events-none">
+                              {formatMoney(d.total)}
+                            </div>
+                          </div>
+                          <div className="text-[10px] text-gray-400 mt-2 truncate w-full text-center">
+                            {new Date(d.date + 'T12:00:00').getDate()}
                           </div>
                         </div>
-                        <div className="text-[10px] text-gray-400 mt-2 truncate w-full text-center">
-                          {new Date(d.date + 'T12:00:00').getDate()}
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    });
+                  })()}
                 </div>
               ) : (
                 <div className="h-64 flex items-center justify-center text-gray-400">No hay datos en este periodo.</div>
@@ -149,29 +160,46 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-[400px]">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">Recuperación de Cartera</h3>
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-lg font-bold text-gray-800">Recuperación de Cartera</h3>
+              </div>
               <p className="text-xs text-gray-500 mb-4">Membresías recientes vencidas o por vencer.</p>
               
+              <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-lg text-xs font-medium">
+                <button onClick={() => setRecoveryFilter('all')} className={`flex-1 py-1 rounded transition ${recoveryFilter === 'all' ? 'bg-white shadow text-gray-800' : 'text-gray-500'}`}>Todos</button>
+                <button onClick={() => setRecoveryFilter('monthly')} className={`flex-1 py-1 rounded transition ${recoveryFilter === 'monthly' ? 'bg-white shadow text-gray-800' : 'text-gray-500'}`}>Mes</button>
+                <button onClick={() => setRecoveryFilter('yearly')} className={`flex-1 py-1 rounded transition ${recoveryFilter === 'yearly' ? 'bg-white shadow text-gray-800' : 'text-gray-500'}`}>Trim/Año</button>
+              </div>
+
               <div className="flex-1 overflow-y-auto pr-2 space-y-3">
-                {recoveryData?.data?.map((m: any) => (
-                  <div key={m.id} className="p-3 bg-gray-50 border border-gray-100 rounded-xl flex flex-col gap-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-bold text-sm text-gray-800">{m.fullName}</p>
-                        <p className="text-xs text-gray-500">{m.planName} - {formatMoney(Number(m.planPrice))}</p>
+                {(() => {
+                  const filtered = recoveryData?.data?.filter((m: any) => {
+                    if (recoveryFilter === 'monthly') return m.durationDays > 7 && m.durationDays <= 31;
+                    if (recoveryFilter === 'yearly') return m.durationDays > 31;
+                    return true; // all
+                  }) || [];
+
+                  if (filtered.length === 0) {
+                    return <div className="text-center text-gray-500 text-sm mt-10">Todo al día. No hay socios en riesgo.</div>;
+                  }
+
+                  return filtered.map((m: any) => (
+                    <div key={m.id} className="p-3 bg-gray-50 border border-gray-100 rounded-xl flex flex-col gap-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-bold text-sm text-gray-800">{m.fullName}</p>
+                          <p className="text-xs text-gray-500">{m.planName} - {formatMoney(Number(m.planPrice))}</p>
+                        </div>
+                        <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${m.status === 'expired' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                          {m.status === 'expired' ? 'Vencido' : 'Por Vencer'}
+                        </span>
                       </div>
-                      <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${m.status === 'expired' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
-                        {m.status === 'expired' ? 'Vencido' : 'Por Vencer'}
-                      </span>
+                      <button onClick={() => handleWhatsApp(m)} className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white text-xs font-bold py-2 rounded-lg transition">
+                        <MessageCircle size={14} /> Cobro WhatsApp
+                      </button>
                     </div>
-                    <button onClick={() => handleWhatsApp(m)} className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white text-xs font-bold py-2 rounded-lg transition">
-                      <MessageCircle size={14} /> Cobro WhatsApp
-                    </button>
-                  </div>
-                ))}
-                {(!recoveryData?.data || recoveryData.data.length === 0) && (
-                  <div className="text-center text-gray-500 text-sm mt-10">Todo al día. No hay socios en riesgo.</div>
-                )}
+                  ));
+                })()}
               </div>
             </div>
           </div>
