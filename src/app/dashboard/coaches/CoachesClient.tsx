@@ -2,8 +2,10 @@
 import { useState } from 'react';
 import { createCoach, toggleCoachStatus, updateCoach } from '@/app/actions/coaches';
 import { Users, Plus, X, Edit } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
+  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [editCoach, setEditCoach] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -111,10 +113,12 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Nuevo Entrenador</h2>
             <form action={async (formData) => { 
               const res = await createCoach(formData); 
+              console.log("Respuesta de createCoach:", res);
               if (res?.error) {
                 alert('Error al crear entrenador: ' + res.error);
               } else {
                 setShowModal(false); 
+                router.refresh();
               }
             }} className="space-y-4">
               <div>

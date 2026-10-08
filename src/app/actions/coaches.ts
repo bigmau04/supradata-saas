@@ -44,8 +44,11 @@ export async function getCoaches() {
 
 export async function createCoach(formData: FormData) {
   try {
+    const payload = Object.fromEntries(formData.entries());
+    console.log("Iniciando createCoach con payload:", payload);
+
     const auth = await verifySession();
-    if (!auth) throw new Error('No autorizado');
+    if (!auth || !auth.session?.gymId) throw new Error('No se encontró el identificador del gimnasio');
 
     const fullName = formData.get('fullName') as string;
     const documentId = formData.get('documentId') as string;
@@ -53,22 +56,22 @@ export async function createCoach(formData: FormData) {
     const specialty = formData.get('specialty') as string;
     const scheduleDetails = formData.get('scheduleDetails') as string;
 
-    await db.insert(coaches).values({
-      gymId: auth.session.gymId,
+    const inserted = await db.insert(coaches).values({
       fullName,
       documentId,
       phone,
       specialty,
       scheduleDetails,
+      gymId: auth.session.gymId,
       isActive: true,
       isClockedIn: false
-    });
+    }).returning();
 
     revalidatePath('/dashboard/coaches');
-    return { success: true };
+    return { success: true, data: inserted[0] };
   } catch (err: any) {
-    console.error('[createCoach]', err);
-    return { success: false, error: err.message };
+    console.error("Error exacto en createCoach:", err);
+    return { success: false, error: err.message || "Error al insertar en la base de datos" };
   }
 }
 
