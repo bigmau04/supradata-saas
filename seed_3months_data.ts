@@ -40,7 +40,7 @@ async function seed() {
     gymId: gym.id,
     name: 'Plan Mensual Prueba 3M',
     durationDays: 30,
-    price: '100000',
+    price: '120000',
     description: 'Mensual test 3M'
   }).returning();
 
@@ -48,7 +48,7 @@ async function seed() {
     gymId: gym.id,
     name: 'Pase Diario Prueba 3M',
     durationDays: 1,
-    price: '15000',
+    price: '25000',
     description: 'Diario test 3M'
   }).returning();
 

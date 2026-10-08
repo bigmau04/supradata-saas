@@ -125,34 +125,85 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-bold text-gray-800 mb-6">Tendencia de Ingresos</h3>
-              {overview.chartData.length > 0 ? (
-                <div className="h-[260px] w-full relative flex items-end gap-2 overflow-x-auto pb-2">
+              {overview.chartData.length > 0 || timeframe === 'month' ? (
+                <div className="h-72 w-full pt-6 pb-8 px-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex flex-col justify-end relative mt-4 ml-6 sm:ml-8 w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)]">
                   {(() => {
-                    const start = new Date(overview.chartData[0].date + 'T12:00:00');
-                    const end = new Date(overview.chartData[overview.chartData.length - 1].date + 'T12:00:00');
+                    let start, end;
+                    const now = new Date();
+                    
+                    if (timeframe === 'month') {
+                      start = new Date(now.getFullYear(), now.getMonth(), 1);
+                      end = new Date(now);
+                    } else {
+                      start = overview.chartData.length > 0 ? new Date(overview.chartData[0].date + 'T12:00:00') : new Date();
+                      end = overview.chartData.length > 0 ? new Date(overview.chartData[overview.chartData.length - 1].date + 'T12:00:00') : new Date();
+                    }
+
                     const map = new Map(overview.chartData.map((d:any) => [d.date, d.total]));
                     const filled = [];
                     for (let c = new Date(start); c <= end; c.setDate(c.getDate() + 1)) {
                       const dStr = c.toISOString().split('T')[0];
-                      filled.push({ date: dStr, total: map.get(dStr) || 0 });
+                      filled.push({ date: dStr, total: map.get(dStr) || 0, dateObj: new Date(c) });
                     }
+                    
                     const max = filled.length > 0 ? Math.max(...filled.map(x => Number(x.total) || 0)) : 0;
-                    return filled.map((d: any) => {
-                      const totalVal = Number(d.total) || 0;
-                      const height = max > 0 ? (totalVal / max) * 100 : 0;
-                      return (
-                        <div key={d.date} className="flex-1 min-w-[30px] flex flex-col items-center group relative cursor-pointer h-full justify-end" onClick={() => loadBreakdown(d.date)}>
-                          <div className="w-full bg-blue-600 rounded-t relative hover:bg-blue-400 transition-all" style={{ height: `${height}%`, minHeight: height > 0 ? '4px' : '0' }}>
-                            <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 transition-opacity pointer-events-none">
-                              {formatMoney(d.total)}
+                    const maxDisplay = max === 0 ? 100 : max; // fallback si no hay datos
+                    
+                    const formatY = (val: number) => {
+                      if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
+                      if (val >= 1000) return `$${(val / 1000).toFixed(0)}k`;
+                      return `$${val}`;
+                    };
+
+                    const formatDateShort = (d: Date) => {
+                      return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                    };
+
+                    return (
+                      <>
+                        <div className="absolute inset-0 pt-6 pb-8 px-4 flex flex-col justify-between pointer-events-none z-0">
+                          {[maxDisplay, maxDisplay/2, 0].map((val, i) => (
+                            <div key={i} className="w-full flex items-center border-b border-dashed border-slate-200 relative h-0">
+                              <span className="absolute -left-3 -translate-x-full text-[10px] text-slate-400 font-medium">
+                                {formatY(val)}
+                              </span>
                             </div>
-                          </div>
-                          <div className="text-[10px] text-gray-400 mt-2 truncate w-full text-center">
-                            {new Date(d.date + 'T12:00:00').getDate()}
-                          </div>
+                          ))}
                         </div>
-                      );
-                    });
+
+                        <div className="w-full h-full flex items-end justify-between gap-1 sm:gap-2 z-10 overflow-x-auto overflow-y-visible">
+                          {filled.map((d: any) => {
+                            const totalVal = Number(d.total) || 0;
+                            const height = maxDisplay > 0 ? (totalVal / maxDisplay) * 100 : 0;
+                            
+                            return (
+                              <div key={d.date} className="flex-1 min-w-[16px] flex flex-col items-center group relative cursor-pointer h-full justify-end" onClick={() => loadBreakdown(d.date)}>
+                                {totalVal > 0 ? (
+                                  <div className="w-full max-w-[2rem] bg-blue-600 hover:bg-blue-700 rounded-t-lg transition-all mx-auto relative group" style={{ height: `${height}%`, minHeight: '4px' }}>
+                                    <div className="opacity-0 group-hover:opacity-100 absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1.5 px-3 rounded-lg shadow-lg whitespace-nowrap z-20 transition-all transform scale-95 group-hover:scale-100 pointer-events-none flex flex-col items-center">
+                                      <span className="font-bold">{formatMoney(totalVal)}</span>
+                                      <span className="text-[10px] text-slate-300">{formatDateShort(d.dateObj)}</span>
+                                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="w-full max-w-[2rem] bg-slate-200/60 h-1.5 rounded-full transition-all mx-auto relative group">
+                                    <div className="opacity-0 group-hover:opacity-100 absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1.5 px-3 rounded-lg shadow-lg whitespace-nowrap z-20 transition-all transform scale-95 group-hover:scale-100 pointer-events-none flex flex-col items-center">
+                                      <span className="font-bold">$0</span>
+                                      <span className="text-[10px] text-slate-300">{formatDateShort(d.dateObj)}</span>
+                                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                    </div>
+                                  </div>
+                                )}
+                                <div className="absolute -bottom-6 text-[10px] font-medium text-slate-500 mt-2 truncate w-full text-center">
+                                  {filled.length > 15 ? (d.dateObj.getDate() % 5 === 0 || d.dateObj.getDate() === 1 || d.dateObj.getDate() === end.getDate() ? formatDateShort(d.dateObj) : '') : formatDateShort(d.dateObj)}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    );
                   })()}
                 </div>
               ) : (
