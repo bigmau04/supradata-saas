@@ -21,7 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       ? [
           { href: '/dashboard/plans', label: 'Planes' },
           { href: '/dashboard/coaches', label: 'Entrenadores' },
-          { href: '/dashboard/finance', label: 'Finanzas' },
+          { href: '/dashboard/finances', label: 'Finanzas' },
           { href: '/dashboard/team', label: 'Equipo' },
           { href: '/dashboard/products', label: 'Tienda' },
         ]
@@ -46,7 +46,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   <>
                     <Link href="/dashboard/plans" className="text-gray-600 hover:text-gray-900 font-medium">Planes</Link>
                     <Link href="/dashboard/coaches" className="text-gray-600 hover:text-gray-900 font-medium">Entrenadores</Link>
-                    <Link href="/dashboard/finance" className="text-gray-600 hover:text-gray-900 font-medium">Finanzas</Link>
+                    <Link href="/dashboard/finances" className="text-gray-600 hover:text-gray-900 font-medium">Finanzas</Link>
                     <Link href="/dashboard/team" className="text-gray-600 hover:text-gray-900 font-medium">Equipo</Link>
                     <Link href="/dashboard/products" className="text-gray-600 hover:text-gray-900 font-medium">Tienda</Link>
                   </>
