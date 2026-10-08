@@ -1,0 +1,205 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { getFinancialOverview, getRevenueRecoveryData, getDailyBreakdown } from '@/app/actions/finances';
+import { DollarSign, Wallet, CreditCard, TrendingUp, TrendingDown, MessageCircle } from 'lucide-react';
+
+export function FinancesClient() {
+  const [timeframe, setTimeframe] = useState<'today' | 'week' | 'month' | 'year'>('month');
+  const [overview, setOverview] = useState<any>(null);
+  const [recoveryData, setRecoveryData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [breakdownData, setBreakdownData] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      const [finRes, recRes] = await Promise.all([
+        getFinancialOverview(timeframe),
+        getRevenueRecoveryData()
+      ]);
+      if (finRes.success) setOverview(finRes.data);
+      if (recRes.success) setRecoveryData(recRes);
+      setLoading(false);
+    }
+    load();
+  }, [timeframe]);
+
+  const loadBreakdown = async (dateStr: string) => {
+    // Add 12 hours to avoid timezone issues when clicking chart
+    const d = new Date(dateStr);
+    d.setHours(12);
+    const formatted = d.toISOString().split('T')[0];
+    
+    setSelectedDate(formatted);
+    const res = await getDailyBreakdown(`'${formatted}'`);
+    if (res.success) {
+      setBreakdownData(res.data || []);
+    }
+  };
+
+  const formatMoney = (val: number) => {
+    return Number(val || 0).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
+  };
+
+  const handleWhatsApp = (member: any) => {
+    const url = `https://wa.me/57${member.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${member.fullName}, notamos que tu plan ${member.planName} ${member.status === 'expired' ? 'ha vencido' : 'está próximo a vencer'}. ¡Te esperamos en el gimnasio para renovarlo!`)}`;
+    window.open(url, '_blank');
+  };
+
+  if (loading && !overview) {
+    return <div className="text-center py-20 text-gray-500 font-bold animate-pulse">Cargando analíticas...</div>;
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto font-sans">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <DollarSign className="text-blue-600" size={32} />
+            Analítica Financiera
+          </h1>
+          <p className="text-gray-500 mt-2">Métricas de facturación, medios de pago y recuperación de cartera.</p>
+        </div>
+        <div className="flex gap-2 bg-white rounded-xl shadow-sm border border-gray-100 p-1 overflow-x-auto w-full md:w-auto">
+          {(['today', 'week', 'month', 'year'] as const).map(tf => (
+            <button key={tf} onClick={() => setTimeframe(tf)} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition ${timeframe === tf ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+              {tf === 'today' ? 'Hoy' : tf === 'week' ? 'Semana' : tf === 'month' ? 'Este Mes' : 'Este Año'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {overview && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Facturación Total</p>
+              <p className="text-4xl font-black text-gray-800">{formatMoney(overview.total)}</p>
+              <div className={`flex items-center gap-1 mt-2 text-sm font-bold ${overview.percentageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {overview.percentageChange >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                <span>{overview.percentageChange > 0 ? '+' : ''}{overview.percentageChange.toFixed(1)}% vs anterior</span>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-4">Medios de Pago</p>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2 text-gray-700 font-medium"><Wallet size={16} className="text-green-600"/> Efectivo</div>
+                  <span className="font-bold">{formatMoney(overview.byMethod.cash)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2 text-gray-700 font-medium"><CreditCard size={16} className="text-blue-600"/> Transferencia</div>
+                  <span className="font-bold">{formatMoney(overview.byMethod.transfer)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 border-l-4 border-l-orange-500">
+              <p className="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Dinero en Riesgo</p>
+              <p className="text-4xl font-black text-orange-600">{formatMoney(recoveryData?.totalAtRisk || 0)}</p>
+              <p className="text-sm text-gray-500 mt-2">Suscripciones por renovar</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-6">Tendencia de Ingresos</h3>
+              {overview.chartData.length > 0 ? (
+                <div className="h-64 flex items-end gap-2 overflow-x-auto pb-2">
+                  {overview.chartData.map((d: any) => {
+                    const max = Math.max(...overview.chartData.map((x: any) => x.total));
+                    const height = max > 0 ? (d.total / max) * 100 : 0;
+                    return (
+                      <div key={d.date} className="flex-1 min-w-[30px] flex flex-col items-center group relative cursor-pointer" onClick={() => loadBreakdown(d.date)}>
+                        <div className="w-full bg-blue-100 rounded-t-sm relative hover:bg-blue-400 transition-all" style={{ height: `${height}%` }}>
+                          <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 transition-opacity pointer-events-none">
+                            {formatMoney(d.total)}
+                          </div>
+                        </div>
+                        <div className="text-[10px] text-gray-400 mt-2 truncate w-full text-center">
+                          {new Date(d.date + 'T12:00:00').getDate()}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-gray-400">No hay datos en este periodo.</div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-[400px]">
+              <h3 className="text-lg font-bold text-gray-800 mb-2">Recuperación de Cartera</h3>
+              <p className="text-xs text-gray-500 mb-4">Membresías recientes vencidas o por vencer.</p>
+              
+              <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                {recoveryData?.data?.map((m: any) => (
+                  <div key={m.id} className="p-3 bg-gray-50 border border-gray-100 rounded-xl flex flex-col gap-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-bold text-sm text-gray-800">{m.fullName}</p>
+                        <p className="text-xs text-gray-500">{m.planName} - {formatMoney(Number(m.planPrice))}</p>
+                      </div>
+                      <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${m.status === 'expired' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                        {m.status === 'expired' ? 'Vencido' : 'Por Vencer'}
+                      </span>
+                    </div>
+                    <button onClick={() => handleWhatsApp(m)} className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white text-xs font-bold py-2 rounded-lg transition">
+                      <MessageCircle size={14} /> Cobro WhatsApp
+                    </button>
+                  </div>
+                ))}
+                {(!recoveryData?.data || recoveryData.data.length === 0) && (
+                  <div className="text-center text-gray-500 text-sm mt-10">Todo al día. No hay socios en riesgo.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {selectedDate && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-2xl w-full relative max-h-[90dvh] flex flex-col">
+            <button onClick={() => setSelectedDate(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 font-bold p-2 bg-gray-100 rounded-full text-sm">Cerrar</button>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Desglose del Día</h2>
+            <p className="text-gray-500 mb-6 font-medium">{new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            
+            <div className="overflow-y-auto flex-1 border rounded-xl">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 border-b sticky top-0">
+                  <tr>
+                    <th className="px-4 py-3 font-medium text-gray-600">Hora</th>
+                    <th className="px-4 py-3 font-medium text-gray-600">Concepto</th>
+                    <th className="px-4 py-3 font-medium text-gray-600">Socio / Detalle</th>
+                    <th className="px-4 py-3 font-medium text-gray-600">Método</th>
+                    <th className="px-4 py-3 font-medium text-gray-600 text-right">Monto</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {breakdownData.map((tx: any) => (
+                    <tr key={tx.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{new Date(tx.createdAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute:'2-digit'})}</td>
+                      <td className="px-4 py-3 font-medium text-gray-800 capitalize">{tx.concept.replace('_', ' ')}</td>
+                      <td className="px-4 py-3 text-gray-600">{tx.memberFullName || 'Mostrador'}</td>
+                      <td className="px-4 py-3 text-gray-500">{tx.method === 'cash' ? 'Efectivo' : 'Transf.'}</td>
+                      <td className="px-4 py-3 font-bold text-right text-green-600">+{formatMoney(Number(tx.amount))}</td>
+                    </tr>
+                  ))}
+                  {breakdownData.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="text-center py-8 text-gray-500">No hay transacciones exitosas este día.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
