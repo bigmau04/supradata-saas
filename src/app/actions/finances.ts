@@ -4,12 +4,14 @@ import { db } from '@/db';
 import { payments, members, memberSubscriptions, membershipPlans } from '@/db/schema';
 import { eq, and, sql, or } from 'drizzle-orm';
 import { verifySession } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 export async function getFinancialOverview(timeframe: 'today' | 'week' | 'month' | 'year') {
   try {
     const auth = await verifySession();
     if (!auth) throw new Error('No autorizado');
 
+    revalidatePath('/dashboard/finances');
     const gymId = auth.session.gymId;
     const now = new Date();
     let startDate: Date;
