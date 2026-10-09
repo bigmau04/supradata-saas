@@ -433,7 +433,14 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
           <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-2xl w-full relative max-h-[90dvh] flex flex-col">
             <button onClick={() => setSelectedDate(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 font-bold p-2 bg-gray-100 rounded-full text-sm">Cerrar</button>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Desglose del Día</h2>
-            <p className="text-gray-500 mb-6 font-medium">{new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <div className="flex justify-between items-center mb-6">
+              <p className="text-gray-500 font-medium">
+                {new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+              <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-xl font-bold text-lg">
+                Total: ${formatMoney(breakdownData.reduce((acc, curr) => acc + Number(curr.amount), 0))}
+              </div>
+            </div>
             
             <div className="overflow-y-auto flex-1 border rounded-xl">
               <table className="w-full text-left text-sm">
