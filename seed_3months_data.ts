@@ -22,11 +22,10 @@ async function seed() {
     console.log('No gyms found. Exiting.');
     process.exit(0);
   }
-  // Try to find the gym_id from the first appUser or member
   let gymId: string = allGyms[0].id;
-  const existingUsers = await db.select().from(appUsers);
-  if (existingUsers.length > 0 && existingUsers[0].gymId) {
-    gymId = existingUsers[0].gymId;
+  const natureGym = allGyms.find(g => g.name.toLowerCase().includes('nature'));
+  if (natureGym) {
+    gymId = natureGym.id;
   }
   
   console.log(`-> Insertando datos para gym_id: ${gymId}`);

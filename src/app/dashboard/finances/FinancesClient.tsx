@@ -62,7 +62,13 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
   };
 
   const handleWhatsApp = (member: any) => {
-    const url = `https://wa.me/57${member.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${member.fullName}, notamos que tu plan ${member.planName} ${member.status === 'expired' ? 'ha vencido' : 'está próximo a vencer'}. ¡Te esperamos en el gimnasio para renovarlo!`)}`;
+    let message = '';
+    if (member.status === 'expired') {
+      message = `¡Hola ${member.fullName}! Te extrañamos en el gym 💪. Tu membresía ${member.planName} venció el ${member.endDate}. Renuévala hoy para mantener tu acceso sin interrupciones. ¿Deseas hacer transferencia o pasas por caja?`;
+    } else {
+      message = `¡Hola ${member.fullName}! Te recordamos que tu membresía ${member.planName} vence el ${member.endDate}. Pasa por recepción para renovar con anticipación.`;
+    }
+    const url = `https://wa.me/57${member.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
 
@@ -171,7 +177,7 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
                           ))}
                         </div>
 
-                        <div className="w-full h-full flex items-end justify-between gap-1 sm:gap-2 z-10 overflow-x-auto overflow-y-visible">
+                        <div className="w-full h-full flex items-end justify-between gap-1 sm:gap-2 z-10">
                           {filled.map((d: any) => {
                             const totalVal = Number(d.total) || 0;
                             const height = maxDisplay > 0 ? (totalVal / maxDisplay) * 100 : 0;

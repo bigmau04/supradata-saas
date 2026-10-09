@@ -20,9 +20,8 @@ async function clean() {
   // Identify all test members
   const testMembers = await db.select().from(members).where(
     or(
-      like(members.documentId, 'SEED%'),
-      like(members.fullName, '%Prueba%'),
-      like(members.fullName, '%Socio 3M%')
+      like(members.fullName, 'Socio 3M%'),
+      like(members.fullName, 'TEST_%')
     )
   );
 
@@ -35,29 +34,44 @@ async function clean() {
 
   const memberIds = testMembers.map((m: any) => m.id);
 
+  let deletedAttendances = 0;
+  let deletedPayments = 0;
+  let deletedSubscriptions = 0;
+  let deletedMembersCount = 0;
+
   // Delete attendances
   console.log('Deleting attendances...');
   for (const mId of memberIds) {
-    await db.delete(attendances).where(eq(attendances.memberId, mId));
+    const res = await db.delete(attendances).where(eq(attendances.memberId, mId)).returning();
+    deletedAttendances += res.length;
   }
 
   // Delete payments
   console.log('Deleting payments...');
   for (const mId of memberIds) {
-    await db.delete(payments).where(eq(payments.memberId, mId));
+    const res = await db.delete(payments).where(eq(payments.memberId, mId)).returning();
+    deletedPayments += res.length;
   }
 
   // Delete subscriptions
   console.log('Deleting member subscriptions...');
   for (const mId of memberIds) {
-    await db.delete(memberSubscriptions).where(eq(memberSubscriptions.memberId, mId));
+    const res = await db.delete(memberSubscriptions).where(eq(memberSubscriptions.memberId, mId)).returning();
+    deletedSubscriptions += res.length;
   }
 
   // Delete members
   console.log('Deleting members...');
   for (const mId of memberIds) {
-    await db.delete(members).where(eq(members.id, mId));
+    const res = await db.delete(members).where(eq(members.id, mId)).returning();
+    deletedMembersCount += res.length;
   }
+
+  console.log(`Summary of deleted test data:`);
+  console.log(`- Members: ${deletedMembersCount}`);
+  console.log(`- Subscriptions: ${deletedSubscriptions}`);
+  console.log(`- Payments: ${deletedPayments}`);
+  console.log(`- Attendances: ${deletedAttendances}`);
 
   console.log('Cleanup completed successfully.');
   process.exit(0);
