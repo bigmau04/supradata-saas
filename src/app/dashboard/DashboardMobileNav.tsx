@@ -6,8 +6,8 @@ import { usePathname } from 'next/navigation';
 type Item = { href: string; label: string };
 
 /**
- * Navegación del dashboard para móvil/tablet (< md): barra de pestañas con
- * scroll horizontal, objetivos táctiles de 44px y resaltado de la ruta activa.
+ * Mobile dashboard navigation: compact tabs with horizontal scroll
+ * matching the Linear/Supabase design system.
  */
 export default function DashboardMobileNav({ items }: { items: Item[] }) {
   const pathname = usePathname();
@@ -17,10 +17,10 @@ export default function DashboardMobileNav({ items }: { items: Item[] }) {
 
   return (
     <nav
-      aria-label="Navegación del panel"
-      className="md:hidden border-t border-gray-100 bg-white"
+      aria-label="Navegación del panel móvil"
+      className="md:hidden border-b border-slate-200/80 bg-white/95 backdrop-blur-md"
     >
-      <ul className="flex gap-1 overflow-x-auto px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <ul className="flex gap-1 overflow-x-auto px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((item) => {
           const active = isActive(item.href);
           return (
@@ -28,10 +28,10 @@ export default function DashboardMobileNav({ items }: { items: Item[] }) {
               <Link
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`flex min-h-[44px] items-center rounded-lg px-4 text-sm font-semibold transition-colors ${
+                className={`flex h-8 items-center rounded-md px-3 text-xs transition-colors ${
                   active
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 active:bg-gray-100'
+                    ? 'bg-slate-100 text-slate-900 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
                 }`}
               >
                 {item.label}

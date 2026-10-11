@@ -1,25 +1,67 @@
 'use client';
+
 import { useState, useTransition } from 'react';
 import { createMember, renewMemberPlan } from '@/app/actions/members';
-import { Search, Plus, MessageCircle, User, AlertTriangle, XOctagon, CheckCircle2, DollarSign, RefreshCw, X, CheckCircle, QrCode, UserPlus } from 'lucide-react';
+import {
+  Search,
+  Plus,
+  MessageCircle,
+  User,
+  AlertTriangle,
+  XOctagon,
+  CheckCircle2,
+  DollarSign,
+  RefreshCw,
+  X,
+  CheckCircle,
+  QrCode,
+  UserPlus,
+  Send,
+} from 'lucide-react';
 
-// ─── Toast component ──────────────────────────────────────────────────────────
-function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
+function Toast({
+  message,
+  type,
+  onClose,
+}: {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}) {
   return (
-    <div className={`fixed top-4 right-4 z-[100] max-w-sm w-full shadow-2xl rounded-2xl p-4 flex items-start gap-3 border transition-all animate-in slide-in-from-top-4 duration-300 ${
-      type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'
-    }`}>
-      {type === 'error'
-        ? <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-        : <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-      }
-      <p className="text-sm font-medium flex-1">{message}</p>
-      <button onClick={onClose} className="text-gray-400 hover:text-gray-600 shrink-0"><X className="h-4 w-4" /></button>
+    <div
+      className={`fixed top-4 right-4 z-[100] max-w-sm w-full shadow-lg rounded-xl p-4 flex items-start gap-3 border backdrop-blur-md ${
+        type === 'error'
+          ? 'bg-rose-50/95 border-rose-200 text-rose-900'
+          : 'bg-emerald-50/95 border-emerald-200 text-emerald-900'
+      }`}
+    >
+      {type === 'error' ? (
+        <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+      ) : (
+        <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+      )}
+      <p className="text-xs font-medium flex-1">{message}</p>
+      <button
+        onClick={onClose}
+        className="text-slate-400 hover:text-slate-600 shrink-0"
+        aria-label="Cerrar notificación"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
 
-export function MembersClient({ initialMembers, plans, coaches = [] }: { initialMembers: any[], plans: any[], coaches?: any[] }) {
+export function MembersClient({
+  initialMembers,
+  plans,
+  coaches = [],
+}: {
+  initialMembers: any[];
+  plans: any[];
+  coaches?: any[];
+}) {
   const [members, setMembers] = useState(initialMembers);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'healthy' | 'risk' | 'critical' | 'inactive'>('all');
@@ -34,8 +76,9 @@ export function MembersClient({ initialMembers, plans, coaches = [] }: { initial
     setTimeout(() => setToast(null), 5000);
   };
 
-  const filtered = members.filter(m => {
-    const matchesSearch = m.fullName.toLowerCase().includes(search.toLowerCase()) || m.documentId.includes(search);
+  const filtered = members.filter((m) => {
+    const matchesSearch =
+      m.fullName.toLowerCase().includes(search.toLowerCase()) || m.documentId.includes(search);
     if (!matchesSearch) return false;
     const isInactive = !m.endDate || new Date(m.endDate) < new Date();
     if (filter === 'healthy') return m.churnStatus === 'healthy';
@@ -45,11 +88,15 @@ export function MembersClient({ initialMembers, plans, coaches = [] }: { initial
     return true;
   });
 
-  const healthyCount = members.filter(m => m.churnStatus === 'healthy').length;
-  const riskCount = members.filter(m => m.churnStatus === 'risk').length;
-  const inactiveCount = members.filter(m => !m.endDate || new Date(m.endDate) < new Date()).length;
-  const criticalCount = members.filter(m => m.churnStatus === 'critical' && !(!m.endDate || new Date(m.endDate) < new Date())).length;
-  const moneyAtRisk = members.filter(m => m.churnStatus !== 'healthy').reduce((sum, m) => sum + Number(m.planPrice || 0), 0);
+  const healthyCount = members.filter((m) => m.churnStatus === 'healthy').length;
+  const riskCount = members.filter((m) => m.churnStatus === 'risk').length;
+  const inactiveCount = members.filter((m) => !m.endDate || new Date(m.endDate) < new Date()).length;
+  const criticalCount = members.filter(
+    (m) => m.churnStatus === 'critical' && !(!m.endDate || new Date(m.endDate) < new Date())
+  ).length;
+  const moneyAtRisk = members
+    .filter((m) => m.churnStatus !== 'healthy')
+    .reduce((sum, m) => sum + Number(m.planPrice || 0), 0);
 
   const handleWhatsAppAction = (member: any) => {
     if (!member.phone) return;
@@ -58,12 +105,12 @@ export function MembersClient({ initialMembers, plans, coaches = [] }: { initial
     let text = '';
     const dateStr = member.endDate ? new Date(member.endDate).toLocaleDateString('es-CO') : 'pronto';
     if (member.churnStatus === 'risk') {
-      text = `Hola ${member.fullName}, te escribimos del gimnasio. Notamos que tu membresia vence pronto (${dateStr}). Deseas renovar?`;
+      text = `Hola ${member.fullName}, te escribimos del gimnasio. Notamos que tu membresía vence pronto (${dateStr}). ¿Deseas renovar?`;
     } else if (member.churnStatus === 'critical') {
-      text = `Hola ${member.fullName}, te extranamos en el gimnasio! Hace dias no te vemos. Cuentanos si necesitas ajustar tu plan.`;
+      text = `Hola ${member.fullName}, ¡te extrañamos en el gimnasio! Hace días no te vemos. Cuéntanos si necesitas ajustar tu plan.`;
     } else {
       const url = `${window.location.origin}/pass/${member.qrAccessToken}`;
-      text = `Hola! Aqui tienes tu carnet digital de acceso al gimnasio: ${url}`;
+      text = `¡Hola! Aquí tienes tu carnet digital de acceso al gimnasio: ${url}`;
     }
     window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -99,7 +146,7 @@ export function MembersClient({ initialMembers, plans, coaches = [] }: { initial
     const res = await renewMemberPlan(formData);
     setIsRenewing(false);
     if (res.success) {
-      const planName = plans.find(p => p.id === formData.get('planId'))?.name || 'Plan';
+      const planName = plans.find((p) => p.id === formData.get('planId'))?.name || 'Plan';
       showToast(`Plan "${planName}" renovado exitosamente.`, 'success');
       setRenewMember(null);
       window.location.reload();
@@ -109,191 +156,398 @@ export function MembersClient({ initialMembers, plans, coaches = [] }: { initial
   }
 
   return (
-    <div>
+    <div className="space-y-6 font-sans">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div onClick={() => setFilter('healthy')} className={`cursor-pointer p-6 rounded-2xl shadow-sm border transition-all ${filter === 'healthy' ? 'bg-green-50 border-green-200 ring-2 ring-green-500' : 'bg-white border-gray-100 hover:border-green-300'} flex items-center gap-4`}>
-          <div className="bg-green-100 p-3 rounded-full text-green-600"><CheckCircle2 size={24} /></div>
-          <div><p className="text-sm text-gray-500 font-bold uppercase">Saludables</p><p className="text-2xl font-black text-gray-800">{healthyCount}</p></div>
+      {/* COMPACT PAGE HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">Gestión de Miembros</h1>
+          <p className="text-xs text-slate-500">
+            Control de altas, retención de cartera y emisión de carnets QR
+          </p>
         </div>
-        <div onClick={() => setFilter('risk')} className={`cursor-pointer p-6 rounded-2xl shadow-sm border transition-all ${filter === 'risk' ? 'bg-yellow-50 border-yellow-200 ring-2 ring-yellow-500' : 'bg-white border-gray-100 hover:border-yellow-300'} flex items-center gap-4`}>
-          <div className="bg-yellow-100 p-3 rounded-full text-yellow-600"><AlertTriangle size={24} /></div>
-          <div><p className="text-sm text-gray-500 font-bold uppercase">En Riesgo</p><p className="text-2xl font-black text-gray-800">{riskCount}</p></div>
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2 px-3.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs self-start sm:self-auto"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          <span>Nuevo Socio</span>
+        </button>
+      </div>
+
+      {/* COMPACT KPI CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div
+          onClick={() => setFilter('healthy')}
+          className={`cursor-pointer bg-white p-5 rounded-xl border shadow-xs transition-colors ${
+            filter === 'healthy'
+              ? 'border-emerald-500 ring-1 ring-emerald-500'
+              : 'border-slate-200/80 hover:border-slate-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-500">Saludables</span>
+            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
+              Al día
+            </span>
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums mt-3">
+            {healthyCount}
+          </p>
+          <p className="text-[11px] text-slate-400 mt-1">Asistencia regular y plan activo</p>
         </div>
-        <div onClick={() => setFilter('critical')} className={`cursor-pointer p-6 rounded-2xl shadow-sm border transition-all ${filter === 'critical' ? 'bg-red-50 border-red-200 ring-2 ring-red-500' : 'bg-white border-gray-100 hover:border-red-300'} flex items-center gap-4`}>
-          <div className="bg-red-100 p-3 rounded-full text-red-600"><XOctagon size={24} /></div>
-          <div><p className="text-sm text-gray-500 font-bold uppercase">Criticos</p><p className="text-2xl font-black text-gray-800">{criticalCount}</p></div>
+
+        <div
+          onClick={() => setFilter('risk')}
+          className={`cursor-pointer bg-white p-5 rounded-xl border shadow-xs transition-colors ${
+            filter === 'risk'
+              ? 'border-amber-500 ring-1 ring-amber-500'
+              : 'border-slate-200/80 hover:border-slate-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-500">En Riesgo</span>
+            <span className="bg-amber-50 text-amber-700 border border-amber-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
+              Por vencer
+            </span>
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums mt-3">
+            {riskCount}
+          </p>
+          <p className="text-[11px] text-slate-400 mt-1">Vence en &le; 7 días o baja asistencia</p>
         </div>
-        <div className="bg-gray-900 p-6 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="bg-white/20 p-3 rounded-full text-white"><DollarSign size={24} /></div>
-          <div><p className="text-sm text-gray-300 font-bold uppercase">Dinero en Riesgo</p><p className="text-2xl font-black text-white">${moneyAtRisk.toLocaleString('es-CO')}</p></div>
+
+        <div
+          onClick={() => setFilter('critical')}
+          className={`cursor-pointer bg-white p-5 rounded-xl border shadow-xs transition-colors ${
+            filter === 'critical'
+              ? 'border-rose-500 ring-1 ring-rose-500'
+              : 'border-slate-200/80 hover:border-slate-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-500">Críticos</span>
+            <span className="bg-rose-50 text-rose-700 border border-rose-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
+              Ausentes
+            </span>
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums mt-3">
+            {criticalCount}
+          </p>
+          <p className="text-[11px] text-slate-400 mt-1">&gt; 10 días sin registrar ingreso</p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-500">Cartera en Riesgo</span>
+            <span className="p-1 rounded-md bg-slate-100 text-slate-700">
+              <DollarSign className="h-3.5 w-3.5" />
+            </span>
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums mt-3">
+            ${moneyAtRisk.toLocaleString('es-CO')}
+          </p>
+          <p className="text-[11px] text-slate-400 mt-1">Valor de planes con riesgo de churn</p>
         </div>
       </div>
 
-      {/* TOOLBAR */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <div className="flex gap-2 w-full md:w-auto">
-          <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-            <input type="text" placeholder="Buscar socio..." className="pl-10 pr-4 py-2 w-full border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" value={search} onChange={(e) => setSearch(e.target.value)} />
+      {/* FILTER & SEARCH TOOLBAR */}
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+        <div className="flex items-center gap-2 flex-1 max-w-md">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre o cédula..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white placeholder:text-slate-400"
+            />
           </div>
-          <select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="border rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium text-gray-700">
+
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as any)}
+            className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium text-slate-700"
+          >
             <option value="all">Todos los estados</option>
             <option value="healthy">🟢 Saludables</option>
             <option value="risk">🟡 En Riesgo</option>
-            <option value="critical">🔴 Criticos</option>
+            <option value="critical">🔴 Críticos</option>
             <option value="inactive">⚪ Inactivos</option>
           </select>
         </div>
-        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-          <div className="text-sm font-semibold text-gray-500">Mostrando {filtered.length} {filtered.length === 1 ? 'socio' : 'socios'}</div>
-          <button onClick={() => setIsCreateModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition whitespace-nowrap">
-            <Plus className="h-5 w-5" /> Nuevo
-          </button>
+
+        <div className="text-xs text-slate-500 self-end sm:self-center font-medium">
+          Mostrando <span className="font-semibold text-slate-900">{filtered.length}</span> de{' '}
+          {members.length} socios
         </div>
       </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="px-6 py-4 font-medium text-gray-600">Nombre</th>
-              <th className="px-6 py-4 font-medium text-gray-600">Telefono</th>
-              <th className="px-6 py-4 font-medium text-gray-600">Ultima Visita</th>
-              <th className="px-6 py-4 font-medium text-gray-600">Plan / Vence</th>
-              <th className="px-6 py-4 font-medium text-gray-600">Retencion</th>
-              <th className="px-6 py-4 font-medium text-gray-600 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {filtered.map((member, index) => {
-              const isInactive = !member.endDate || new Date(member.endDate) < new Date();
-              let statusColor = member.churnStatus === 'healthy' ? 'bg-green-100 text-green-700' : member.churnStatus === 'risk' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-700';
-              let statusText = member.churnStatus === 'healthy' ? 'Al dia' : member.churnStatus === 'risk' ? 'En Riesgo' : 'Critico';
-              if (isInactive) { statusColor = 'bg-gray-100 text-gray-600'; statusText = 'Inactivo'; }
+      {/* TABLE CONTAINER */}
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px] text-left">
+            <thead className="bg-slate-50/75 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+              <tr>
+                <th className="py-3 px-4">Socio / Documento</th>
+                <th className="py-3 px-4">Teléfono</th>
+                <th className="py-3 px-4">Última Visita</th>
+                <th className="py-3 px-4">Plan / Vigencia</th>
+                <th className="py-3 px-4">Estado</th>
+                <th className="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {filtered.map((member, index) => {
+                const isInactive = !member.endDate || new Date(member.endDate) < new Date();
+                let statusBadge = (
+                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
+                    Al día
+                  </span>
+                );
+                if (member.churnStatus === 'risk') {
+                  statusBadge = (
+                    <span className="bg-amber-50 text-amber-700 border border-amber-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
+                      En Riesgo
+                    </span>
+                  );
+                } else if (member.churnStatus === 'critical') {
+                  statusBadge = (
+                    <span className="bg-rose-50 text-rose-700 border border-rose-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
+                      Crítico
+                    </span>
+                  );
+                }
+                if (isInactive) {
+                  statusBadge = (
+                    <span className="bg-slate-100 text-slate-600 border border-slate-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
+                      Inactivo
+                    </span>
+                  );
+                }
 
-              return (
-                <tr key={`${member.id}-${index}`} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500"><User className="h-5 w-5" /></div>
-                    <div><span className="font-bold text-gray-800 block">{member.fullName}</span><span className="text-xs text-gray-500">{member.documentId}</span></div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">{member.phone}</td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {member.daysSinceLastAttendance === -1 ? 'Nunca' : member.daysSinceLastAttendance === 0 ? 'Hoy' : `Hace ${member.daysSinceLastAttendance}d`}
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {member.planName ? (
-                      <div>
-                        <span className="font-medium text-gray-800 block">{member.planName}</span>
-                        {member.endDate && <span className="text-xs text-gray-500">Vence: {new Date(member.endDate).toLocaleDateString('es-CO')}</span>}
+                return (
+                  <tr
+                    key={`${member.id}-${index}`}
+                    className="hover:bg-slate-50/50 transition-colors"
+                  >
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200/60">
+                          {member.fullName
+                            ?.split(' ')
+                            .map((n: string) => n[0])
+                            .slice(0, 2)
+                            .join('')
+                            .toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-slate-900 block leading-tight">
+                            {member.fullName}
+                          </span>
+                          <span className="text-xs font-mono text-slate-400">
+                            {member.documentId}
+                          </span>
+                        </div>
                       </div>
-                    ) : <span className="text-gray-400 text-sm">Sin plan</span>}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`${statusColor} px-3 py-1 rounded-full text-xs font-bold`}>{statusText}</span>
-                    {member.daysUntilExpiry > 0 && member.daysUntilExpiry <= 7 && (
-                      <div className="text-xs text-gray-500 mt-1 font-semibold">Vence en {member.daysUntilExpiry}d</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleResendPass(member)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-bold transition"
-                        title="Reenviar Pase"
-                      >
-                        <QrCode className="h-3.5 w-3.5" /> Reenviar Pase
-                      </button>
-                      <button
-                        onClick={() => setRenewMember(member)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition"
-                        title="Renovar / Cobrar plan"
-                      >
-                        <RefreshCw className="h-3.5 w-3.5" /> Renovar
-                      </button>
-                      <button
-                        onClick={() => handleWhatsAppAction(member)}
-                        disabled={!member.phone}
-                        className={`p-2 rounded-full transition ${member.phone ? 'text-green-600 hover:bg-green-50' : 'text-gray-300 cursor-not-allowed'}`}
-                        title={!member.phone ? 'Sin telefono registrado' : 'Contactar por WhatsApp'}
-                      >
-                        <MessageCircle className="h-6 w-6" />
-                      </button>
+                    </td>
+                    <td className="py-3 px-4 text-xs font-mono text-slate-600">
+                      {member.phone || '—'}
+                    </td>
+                    <td className="py-3 px-4 text-xs text-slate-600">
+                      {member.daysSinceLastAttendance === -1
+                        ? 'Nunca'
+                        : member.daysSinceLastAttendance === 0
+                        ? 'Hoy'
+                        : `Hace ${member.daysSinceLastAttendance}d`}
+                    </td>
+                    <td className="py-3 px-4">
+                      {member.planName ? (
+                        <div>
+                          <span className="text-xs font-semibold text-slate-800 block">
+                            {member.planName}
+                          </span>
+                          {member.endDate && (
+                            <span className="text-[11px] text-slate-400">
+                              Vence:{' '}
+                              {new Date(member.endDate).toLocaleDateString('es-CO', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400">Sin plan</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">{statusBadge}</td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handleResendPass(member)}
+                          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition"
+                          title="Reenviar carnet QR por WhatsApp"
+                        >
+                          <QrCode className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setRenewMember(member)}
+                          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition"
+                          title="Renovar / Extender plan"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleWhatsAppAction(member)}
+                          disabled={!member.phone}
+                          className={`p-1.5 rounded-md transition ${
+                            member.phone
+                              ? 'text-slate-500 hover:text-emerald-600 hover:bg-slate-100'
+                              : 'text-slate-300 cursor-not-allowed'
+                          }`}
+                          title={
+                            member.phone
+                              ? 'Contactar por WhatsApp'
+                              : 'Sin teléfono registrado'
+                          }
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-12 px-4 text-center">
+                    <div className="max-w-sm mx-auto flex flex-col items-center justify-center">
+                      <div className="h-10 w-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center mb-3 border border-slate-200/80">
+                        <UserPlus className="h-5 w-5" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-900">
+                        {members.length === 0
+                          ? 'Aún no tienes socios registrados'
+                          : 'No se encontraron resultados'}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1 mb-4">
+                        {members.length === 0
+                          ? 'Registra tu primer cliente para emitir su carnet QR y controlar accesos.'
+                          : 'Prueba cambiando los filtros o el término de búsqueda.'}
+                      </p>
+                      {members.length === 0 ? (
+                        <button
+                          onClick={() => setIsCreateModalOpen(true)}
+                          className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2 px-3.5 rounded-lg transition"
+                        >
+                          + Registrar Primer Socio
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setSearch('');
+                            setFilter('all');
+                          }}
+                          className="text-xs font-medium text-slate-600 hover:text-slate-900 underline"
+                        >
+                          Limpiar búsqueda
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
-              );
-            })}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-12 px-4 text-center">
-                  <div className="max-w-sm mx-auto flex flex-col items-center justify-center">
-                    <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-blue-100">
-                      <UserPlus className="h-8 w-8" />
-                    </div>
-                    {members.length === 0 ? (
-                      <>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">Aún no tienes socios registrados</h3>
-                        <p className="text-sm text-gray-500 mb-6 text-center">
-                          Registra a tu primer cliente para emitir su carnet QR digital y controlar su acceso.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setIsCreateModalOpen(true)}
-                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all active:scale-95 text-sm"
-                        >
-                          <Plus className="h-4 w-4" /> Registrar Primer Socio
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">No se encontraron socios</h3>
-                        <p className="text-sm text-gray-500 mb-5 text-center">
-                          No hay socios que coincidan con el filtro o término de búsqueda aplicado.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => { setSearch(''); setFilter('all'); }}
-                          className="text-sm font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-xl transition"
-                        >
-                          Restablecer filtros
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table></div>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* MODAL: Crear socio */}
+      {/* MODAL: Crear Socio */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-md p-5 sm:p-6 max-h-[90dvh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Registrar Nuevo Socio</h2>
-              <button onClick={() => setIsCreateModalOpen(false)}><X className="h-5 w-5 text-gray-400" /></button>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 w-full max-w-md max-h-[90dvh] overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h2 className="text-sm font-bold text-slate-900">Registrar Nuevo Socio</h2>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <form action={handleCreate} className="space-y-4">
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label><input name="fullName" required className="w-full border p-2 rounded-lg" /></div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Cedula / Documento</label><input name="documentId" required className="w-full border p-2 rounded-lg" /></div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Telefono</label><input name="phone" required type="tel" className="w-full border p-2 rounded-lg" /></div>
+            <form action={handleCreate} className="space-y-3.5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Plan Inicial (Opcional)</label>
-                <select name="planId" className="w-full border p-2 rounded-lg">
-                  <option value="">-- Sin plan --</option>
-                  {plans.map(p => (<option key={p.id} value={p.id}>{p.name} - ${Number(p.price).toLocaleString('es-CO')}</option>))}
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Nombre Completo *
+                </label>
+                <input
+                  name="fullName"
+                  required
+                  placeholder="Ej. Juan Pérez"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
+                  autoFocus
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Cédula / Documento *
+                  </label>
+                  <input
+                    name="documentId"
+                    required
+                    placeholder="10203040"
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Teléfono / WhatsApp *
+                  </label>
+                  <input
+                    name="phone"
+                    required
+                    type="tel"
+                    placeholder="3001234567"
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Plan Inicial (Opcional)
+                </label>
+                <select
+                  name="planId"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
+                >
+                  <option value="">-- Sin plan asignado --</option>
+                  {plans.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} - ${Number(p.price).toLocaleString('es-CO')}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div className="flex gap-3 mt-6">
-                <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 px-4 py-2 border rounded-lg text-gray-600">Cancelar</button>
-                <button type="submit" disabled={isPending} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-60">
+
+              <div className="flex gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="flex-1 px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 disabled:opacity-60 transition shadow-2xs"
+                >
                   {isPending ? 'Guardando...' : 'Guardar Socio'}
                 </button>
               </div>
@@ -302,63 +556,118 @@ export function MembersClient({ initialMembers, plans, coaches = [] }: { initial
         </div>
       )}
 
-      {/* MODAL: Renovar / Cobrar plan */}
+      {/* MODAL: Renovar / Cobrar Plan */}
       {renewMember && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-md p-5 sm:p-6 max-h-[90dvh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-bold flex items-center gap-2"><RefreshCw className="text-blue-600 h-5 w-5" /> Renovar Plan</h2>
-              <button onClick={() => setRenewMember(null)}><X className="h-5 w-5 text-gray-400" /></button>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 w-full max-w-md max-h-[90dvh] overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 text-slate-700" />
+                <h2 className="text-sm font-bold text-slate-900">Renovación de Membresía</h2>
+              </div>
+              <button
+                onClick={() => setRenewMember(null)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <p className="text-sm text-gray-500 mb-5">
-              Socio: <strong>{renewMember.fullName}</strong>
-              {renewMember.planName && renewMember.endDate && (
-                <span className="ml-2 text-yellow-600 font-medium">(Plan actual: {renewMember.planName} vence {new Date(renewMember.endDate).toLocaleDateString('es-CO')})</span>
+
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 mb-4 text-xs">
+              <p className="font-semibold text-slate-800">{renewMember.fullName}</p>
+              {renewMember.planName && (
+                <p className="text-slate-500 mt-0.5">
+                  Plan actual: {renewMember.planName}{' '}
+                  {renewMember.endDate &&
+                    `· Vence ${new Date(renewMember.endDate).toLocaleDateString('es-CO')}`}
+                </p>
               )}
-            </p>
+            </div>
+
             <form
               action={async (formData) => {
                 await handleRenew(formData);
               }}
-              className="space-y-4"
+              className="space-y-3.5"
             >
               <input type="hidden" name="memberId" value={renewMember.id} />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nuevo Plan *</label>
-                <select name="planId" required className="w-full border-2 rounded-xl p-3 bg-white">
-                  <option value="">-- Selecciona un plan --</option>
-                  {plans.map(p => (<option key={p.id} value={p.id}>{p.name} · {p.durationDays}d · ${Number(p.price).toLocaleString('es-CO')}</option>))}
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Nuevo Plan a Asignar *
+                </label>
+                <select
+                  name="planId"
+                  required
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
+                >
+                  <option value="">-- Elige un plan comercial --</option>
+                  {plans.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.durationDays}d) · ${Number(p.price).toLocaleString('es-CO')}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Metodo de Pago *</label>
-                <select name="method" required className="w-full border-2 rounded-xl p-3 bg-white">
-                  <option value="cash">Efectivo</option>
-                  <option value="transfer">Transferencia</option>
-                </select>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Método de Pago *
+                  </label>
+                  <select
+                    name="method"
+                    required
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
+                  >
+                    <option value="cash">Efectivo</option>
+                    <option value="transfer">Transferencia</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Ref. / Comprobante
+                  </label>
+                  <input
+                    name="referenceNumber"
+                    placeholder="Opcional"
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Referencia (opcional)</label>
-                <input name="referenceNumber" placeholder="Num. comprobante transferencia" className="w-full border-2 rounded-xl p-3" />
-              </div>
+
               {coaches.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Entrenador asignado (opcional)</label>
-                  <select name="coachId" className="w-full border-2 rounded-xl p-3 bg-white">
-                    <option value="">Sin entrenador</option>
-                    {coaches.map((c: any) => (<option key={c.id} value={c.id}>{c.fullName}</option>))}
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Entrenador Responsable
+                  </label>
+                  <select
+                    name="coachId"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
+                  >
+                    <option value="">Sin entrenador asignado</option>
+                    {coaches.map((c: any) => (
+                      <option key={c.id} value={c.id}>
+                        {c.fullName}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
-              {renewMember.planName && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
-                  <strong>Nota:</strong> El plan activo actual sera reemplazado. El nuevo plan inicia hoy.
-                </div>
-              )}
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setRenewMember(null)} className="flex-1 px-4 py-3 border rounded-xl text-gray-600">Cancelar</button>
-                <button type="submit" disabled={isRenewing} className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-60">
-                  {isRenewing ? 'Procesando...' : 'Confirmar Renovacion'}
+
+              <div className="flex gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setRenewMember(null)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isRenewing}
+                  className="flex-1 px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 disabled:opacity-60 transition shadow-2xs"
+                >
+                  {isRenewing ? 'Confirmando...' : 'Confirmar Renovación'}
                 </button>
               </div>
             </form>

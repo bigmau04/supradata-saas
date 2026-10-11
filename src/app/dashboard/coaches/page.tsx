@@ -6,11 +6,11 @@ export default async function CoachesPage() {
   try {
     coachesData = await getCoaches();
   } catch (error) {
-    console.error("Error cargando coaches en page.tsx:", error);
+    console.error('Error cargando coaches en page.tsx:', error);
   }
-  
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6 pt-12">
+    <div className="w-full">
       <CoachesClient initialCoaches={coachesData} />
     </div>
   );

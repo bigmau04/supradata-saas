@@ -17,15 +17,15 @@ export default async function ReceptionPage() {
   try {
     const auth = await verifySession();
     userRole = auth?.session?.role || 'receptionist';
-    
+
     const [coachesData, productsData, shiftData, metricsData, plansData] = await Promise.all([
       getCoaches().catch(() => []),
       getProducts().catch(() => []),
       getActiveShift().catch(() => null),
       getGymLiveMetrics().catch(() => null),
-      getPlansAdmin().catch(() => [])
+      getPlansAdmin().catch(() => []),
     ]);
-    
+
     coaches = coachesData || [];
     products = productsData || [];
     plans = plansData || [];
@@ -34,19 +34,17 @@ export default async function ReceptionPage() {
   } catch (error) {
     console.error('Error loading reception data:', error);
   }
-  
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6 pt-12 flex items-center justify-center">
-      <div className="w-full">
-         <ReceptionClient 
-           coaches={coaches.filter((c: any) => c.isActive)} 
-           products={products} 
-           plans={plans.filter((p: any) => p.isActive)}
-           activeShift={activeShift} 
-           userRole={userRole} 
-           liveMetrics={liveMetrics} 
-         />
-      </div>
+    <div className="w-full">
+      <ReceptionClient
+        coaches={coaches.filter((c: any) => c.isActive)}
+        products={products}
+        plans={plans.filter((p: any) => p.isActive)}
+        activeShift={activeShift}
+        userRole={userRole}
+        liveMetrics={liveMetrics}
+      />
     </div>
   );
 }

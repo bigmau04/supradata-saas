@@ -1,20 +1,54 @@
 import Link from 'next/link';
-import { Dumbbell, LogOut } from 'lucide-react';
 import { deleteSession, verifySession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { db } from '@/db';
+import { gyms, appUsers } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import DashboardMobileNav from './DashboardMobileNav';
+import { DashboardHeaderNav, NavItem } from './DashboardHeaderNav';
+import { UserNav } from './UserNav';
 import OnboardingBanner from './OnboardingBanner';
+
+export const dynamic = 'force-dynamic';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const auth = await verifySession();
-  const role = auth?.session.role;
+  const role = auth?.session.role || 'receptionist';
+
+  let gymName = 'Mi Gimnasio';
+  let userName = role === 'owner' ? 'Administrador' : 'Recepcionista';
+  let userEmail = '';
+
+  if (auth?.session?.gymId) {
+    try {
+      const [gym] = await db
+        .select({ name: gyms.name })
+        .from(gyms)
+        .where(eq(gyms.id, auth.session.gymId))
+        .limit(1);
+      if (gym?.name) gymName = gym.name;
+
+      if (auth.session.userId) {
+        const [user] = await db
+          .select({ fullName: appUsers.fullName, email: appUsers.email })
+          .from(appUsers)
+          .where(eq(appUsers.id, auth.session.userId))
+          .limit(1);
+        if (user?.fullName) userName = user.fullName;
+        if (user?.email) userEmail = user.email;
+      }
+    } catch (e) {
+      console.error('Error fetching layout meta:', e);
+    }
+  }
+
   const handleLogout = async () => {
     'use server';
     await deleteSession();
     redirect('/');
   };
 
-  const mobileItems = [
+  const navItems: NavItem[] = [
     ...(role === 'owner' ? [{ href: '/dashboard', label: 'Resumen' }] : []),
     { href: '/dashboard/reception', label: 'Recepción' },
     { href: '/dashboard/members', label: 'Miembros' },
@@ -30,44 +64,39 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center gap-8">
-              <Link href="/dashboard" className="flex items-center gap-2 text-blue-600 font-bold text-xl tracking-tight">
-                <Dumbbell className="h-6 w-6" />
-                SupraData
-              </Link>
-              <div className="hidden md:flex gap-6">
-                {role === 'owner' && <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 font-medium">Resumen</Link>}
-                <Link href="/dashboard/reception" className="text-gray-600 hover:text-gray-900 font-medium">Recepción</Link>
-                <Link href="/dashboard/members" className="text-gray-600 hover:text-gray-900 font-medium">Miembros</Link>
-                {role === 'owner' && (
-                  <>
-                    <Link href="/dashboard/plans" className="text-gray-600 hover:text-gray-900 font-medium">Planes</Link>
-                    <Link href="/dashboard/coaches" className="text-gray-600 hover:text-gray-900 font-medium">Entrenadores</Link>
-                    <Link href="/dashboard/finances" className="text-gray-600 hover:text-gray-900 font-medium">Finanzas</Link>
-                    <Link href="/dashboard/team" className="text-gray-600 hover:text-gray-900 font-medium">Equipo</Link>
-                    <Link href="/dashboard/products" className="text-gray-600 hover:text-gray-900 font-medium">Tienda</Link>
-                  </>
-                )}
-              </div>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased">
+      <header className="sticky top-0 z-40 h-14 border-b border-slate-200/80 bg-white/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="flex items-center gap-2 group">
+            <div className="h-7 w-7 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs shadow-xs group-hover:bg-slate-800 transition-colors">
+              SD
             </div>
-            <div className="flex items-center">
-              <form action={handleLogout}>
-                <button type="submit" aria-label="Salir" className="text-gray-500 hover:text-red-600 flex items-center gap-2 font-medium transition min-h-[44px] px-2">
-                  <LogOut className="h-5 w-5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Salir</span>
-                </button>
-              </form>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold tracking-tight text-slate-900">SupraData</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/80">
+                PRO
+              </span>
             </div>
-          </div>
+          </Link>
+
+          <div className="h-4 w-px bg-slate-200 hidden md:block" />
+
+          <DashboardHeaderNav items={navItems} />
         </div>
-        <DashboardMobileNav items={mobileItems} />
-      </nav>
+
+        <UserNav
+          gymName={gymName}
+          userName={userName}
+          userEmail={userEmail}
+          role={role}
+          logoutAction={handleLogout}
+        />
+      </header>
+
+      <DashboardMobileNav items={navItems} />
       <OnboardingBanner />
-      <main>
+
+      <main className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8">
         {children}
       </main>
     </div>

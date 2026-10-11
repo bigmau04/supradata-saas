@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Sparkles, Calendar, DollarSign, X, ArrowRight } from 'lucide-react';
+import { Sparkles, X, ArrowRight } from 'lucide-react';
 
 export default function OnboardingBanner() {
   const [isVisible, setIsVisible] = useState(false);
@@ -22,49 +22,44 @@ export default function OnboardingBanner() {
   if (!isVisible) return null;
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-md border-b border-blue-500/30">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm shrink-0 mt-0.5 sm:mt-0">
-            <Sparkles className="h-5 w-5 text-amber-300 animate-pulse" />
+    <div className="bg-slate-900 text-white border-b border-slate-800 shadow-2xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1 rounded-md bg-slate-800 text-amber-300 shrink-0">
+            <Sparkles className="h-3.5 w-3.5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm sm:text-base tracking-tight">
-                ¡Bienvenido a SupraData!
-              </span>
-              <span className="bg-white/20 text-[11px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Guía Rápida
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-blue-100 mt-0.5">
-              <span className="font-semibold text-white">Paso 1:</span> Registra tu primer plan en la pestaña{' '}
-              <Link href="/dashboard/plans" className="underline font-bold text-white hover:text-amber-200">
+            <span className="font-semibold text-slate-100">Guía de Inicio Rápido:</span>{' '}
+            <span className="text-slate-400">
+              1. Crea tus tarifas en{' '}
+              <Link href="/dashboard/plans" className="text-white underline hover:text-slate-200">
                 Planes
-              </Link>
-              . <span className="font-semibold text-white ml-1">Paso 2:</span> Realiza tu primer cobro en{' '}
-              <Link href="/dashboard/reception" className="underline font-bold text-white hover:text-amber-200">
+              </Link>{' '}
+              · 2. Registra socios o cobra visitas en{' '}
+              <Link
+                href="/dashboard/reception"
+                className="text-white underline hover:text-slate-200"
+              >
                 Recepción
               </Link>
-              .
-            </p>
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
           <Link
             href="/dashboard/plans"
-            className="flex items-center gap-1.5 bg-white text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition"
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-white text-slate-900 hover:bg-slate-100 rounded-md text-[11px] font-semibold transition"
           >
-            Configurar Planes <ArrowRight className="h-3.5 w-3.5" />
+            Configurar Planes <ArrowRight className="h-3 w-3" />
           </Link>
           <button
             onClick={handleDismiss}
             aria-label="Cerrar guía"
-            className="p-1.5 rounded-lg hover:bg-white/20 text-white/80 hover:text-white transition"
+            className="p-1 text-slate-400 hover:text-white transition rounded"
             title="Descartar guía de bienvenida"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>

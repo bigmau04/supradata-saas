@@ -6,71 +6,141 @@ import { registerAttendance, AttendanceResult } from '@/app/actions/attendance';
 import { registerQuickPass } from '@/app/actions/quickPass';
 import { sellProduct } from '@/app/actions/products';
 import { openShift, closeShift, registerMinorExpense } from '@/app/actions/cash_shifts';
-import { User, QrCode, Keyboard, DollarSign, X, ShoppingCart, Lock, Unlock, MinusCircle, Wallet, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+import { registerWalkInMember } from '@/app/actions/members';
+import {
+  User,
+  QrCode,
+  Keyboard,
+  DollarSign,
+  X,
+  ShoppingCart,
+  Lock,
+  Unlock,
+  MinusCircle,
+  Wallet,
+  AlertTriangle,
+  CheckCircle,
+  RefreshCw,
+  Camera,
+  UserPlus,
+  ArrowRight,
+  ShieldCheck,
+  Check,
+  Building2,
+  Clock,
+  ScanLine,
+} from 'lucide-react';
 
-function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
+function Toast({
+  message,
+  type,
+  onClose,
+}: {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}) {
   return (
-    <div className={`fixed top-4 right-4 z-[100] max-w-sm w-full shadow-2xl rounded-2xl p-4 flex items-start gap-3 border ${
-      type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'
-    }`}>
-      {type === 'error'
-        ? <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-        : <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-      }
-      <p className="text-sm font-medium flex-1">{message}</p>
-      <button onClick={onClose} className="text-gray-400 hover:text-gray-600 shrink-0"><X className="h-4 w-4" /></button>
+    <div
+      className={`fixed top-4 right-4 z-[100] max-w-sm w-full shadow-lg rounded-xl p-4 flex items-start gap-3 border backdrop-blur-md ${
+        type === 'error'
+          ? 'bg-rose-50/95 border-rose-200 text-rose-900'
+          : 'bg-emerald-50/95 border-emerald-200 text-emerald-900'
+      }`}
+    >
+      {type === 'error' ? (
+        <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+      ) : (
+        <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+      )}
+      <p className="text-xs font-medium flex-1">{message}</p>
+      <button
+        onClick={onClose}
+        className="text-slate-400 hover:text-slate-600 shrink-0"
+        aria-label="Cerrar notificación"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
 
-export function ReceptionClient({ coaches = [], products = [], plans = [], activeShift = null, userRole = 'receptionist', liveMetrics = null }: { coaches?: any[], products?: any[], plans?: any[], activeShift?: any, userRole?: string, liveMetrics?: any }) {
+export function ReceptionClient({
+  coaches = [],
+  products = [],
+  plans = [],
+  activeShift = null,
+  userRole = 'receptionist',
+  liveMetrics = null,
+}: {
+  coaches?: any[];
+  products?: any[];
+  plans?: any[];
+  activeShift?: any;
+  userRole?: string;
+  liveMetrics?: any;
+}) {
   const [inputValue, setInputValue] = useState('');
   const [scanResult, setScanResult] = useState<AttendanceResult | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [showQuickPass, setShowQuickPass] = useState(false);
-  const [showStore, setShowStore] = useState(false);
-  const [showWalkInRegister, setShowWalkInRegister] = useState(false);
+  const [activeTab, setActiveTab] = useState<'register' | 'quickPass' | 'store'>('register');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  
+
+  // Shift & Cash Modals
   const [showOpenShift, setShowOpenShift] = useState(!activeShift && userRole !== 'owner');
   const [showCloseShift, setShowCloseShift] = useState(false);
   const [showExpense, setShowExpense] = useState(false);
 
+  // Submitting states
   const [isSubmittingQuickPass, setIsSubmittingQuickPass] = useState(false);
   const [isSubmittingStore, setIsSubmittingStore] = useState(false);
   const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
-  
+  const [isSubmittingMember, setIsSubmittingMember] = useState(false);
+
+  // Store form state
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [storeQty, setStoreQty] = useState(1);
+
+  // Walk-in form photo state
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 6000);
+    setTimeout(() => setToast(null), 5000);
   };
 
   useEffect(() => {
-    if (!scannerOpen && !scanResult && !showQuickPass && !showStore && !showOpenShift && !showCloseShift && !showExpense) {
+    if (!scannerOpen && !showOpenShift && !showCloseShift && !showExpense) {
       inputRef.current?.focus();
     }
-  }, [scannerOpen, scanResult, showQuickPass, showStore, showOpenShift, showCloseShift, showExpense]);
+  }, [scannerOpen, showOpenShift, showCloseShift, showExpense]);
 
   useEffect(() => {
     if (scanResult) {
       const timer = setTimeout(() => {
         setScanResult(null);
-        setInputValue('');
-      }, 3000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [scanResult]);
 
   useEffect(() => {
     if (scannerOpen) {
-      const scanner = new Html5QrcodeScanner("reader", { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        videoConstraints: { facingMode: "environment" }
-      }, false);
+      const scanner = new Html5QrcodeScanner(
+        'reader',
+        {
+          fps: 10,
+          qrbox: { width: 220, height: 220 },
+          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+          videoConstraints: { facingMode: 'environment' },
+        },
+        false
+      );
       scanner.render(
         async (decodedText) => {
           scanner.clear();
@@ -79,7 +149,9 @@ export function ReceptionClient({ coaches = [], products = [], plans = [], activ
         },
         () => {}
       );
-      return () => { scanner.clear().catch(console.error); };
+      return () => {
+        scanner.clear().catch(console.error);
+      };
     }
   }, [scannerOpen]);
 
@@ -89,8 +161,8 @@ export function ReceptionClient({ coaches = [], products = [], plans = [], activ
       const res = await registerAttendance(query, method);
       setScanResult(res);
       setInputValue('');
-    } catch (e) {
-      setScanResult({ success: false, message: 'Error de servidor' });
+    } catch {
+      setScanResult({ success: false, message: 'Error de servidor al validar acceso' });
       setInputValue('');
     }
   };
@@ -102,511 +174,24 @@ export function ReceptionClient({ coaches = [], products = [], plans = [], activ
     }
   };
 
-  return (
-    <div className="flex flex-col items-center max-w-4xl mx-auto font-sans gap-6">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-      
-      {liveMetrics && (
-        <div className="w-full flex justify-around bg-white px-6 py-4 rounded-3xl shadow-sm border border-gray-100">
-          <div className="text-center">
-            <p className="text-xs text-gray-500 uppercase font-bold">Aforo Sala</p>
-            <p className="text-2xl font-black text-blue-600">{liveMetrics.peopleInGymCount}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-gray-500 uppercase font-bold">Socios Activos</p>
-            <p className="text-2xl font-black text-green-600">{liveMetrics.activeMembersCount}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-gray-500 uppercase font-bold">Por Vencer</p>
-            <p className="text-2xl font-black text-orange-500">{liveMetrics.expiringSoonCount}</p>
-          </div>
-        </div>
-      )}
-      
-      {/* SHIFT SUMMARY CARD */}
-      {activeShift && !scanResult && (
-        <div className="w-full flex flex-col gap-4">
-          <div className="w-full bg-white rounded-3xl shadow p-4 sm:p-6 border flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="text-sm font-bold text-gray-500 uppercase flex items-center gap-2">
-                <Unlock size={16} className="text-green-500" /> Turno Abierto
-              </div>
-              <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-x-6 gap-y-1 mt-2 text-sm text-gray-600">
-                <div>Base: <span className="font-bold">${Number(activeShift.initialCash).toLocaleString('es-CO')}</span></div>
-                <div>Recaudos (Efectivo): <span className="font-bold text-green-600">+${activeShift.totalCashIn.toLocaleString('es-CO')}</span></div>
-                <div>Gastos: <span className="font-bold text-red-600">-${activeShift.totalExpenses.toLocaleString('es-CO')}</span></div>
-              </div>
-              <div className="text-lg sm:text-xl font-black text-gray-800 mt-2">
-                Efectivo Esperado: ${activeShift.expectedCash.toLocaleString('es-CO')}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3 lg:flex">
-              <button onClick={() => setShowExpense(true)} className="flex items-center justify-center gap-2 bg-red-50 text-red-600 px-3 sm:px-4 py-3 rounded-xl font-bold hover:bg-red-100 transition">
-                <MinusCircle size={18} /> Gasto Menor
-              </button>
-              <button onClick={() => setShowCloseShift(true)} className="flex items-center justify-center gap-2 bg-gray-900 text-white px-3 sm:px-4 py-3 rounded-xl font-bold hover:bg-gray-800 transition">
-                <Lock size={18} /> Cerrar Turno
-              </button>
-            </div>
-          </div>
-
-          {/* MOVIMIENTOS DEL TURNO */}
-          <div className="w-full bg-white rounded-3xl shadow-sm border p-4 sm:p-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Movimientos del Turno</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-4 py-2 font-medium text-gray-600">Hora</th>
-                    <th className="px-4 py-2 font-medium text-gray-600">Detalle</th>
-                    <th className="px-4 py-2 font-medium text-gray-600">Método</th>
-                    <th className="px-4 py-2 font-medium text-gray-600 text-right">Valor</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {activeShift.transactions?.map((tx: any, idx: number) => (
-                    <tr key={idx} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                        {new Date(tx.date).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                      <td className="px-4 py-3 font-medium text-gray-800">
-                        {tx.description}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-md text-xs font-bold ${tx.method === 'cash' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                          {tx.method === 'cash' ? 'Efectivo' : 'Transferencia'}
-                        </span>
-                      </td>
-                      <td className={`px-4 py-3 font-bold text-right whitespace-nowrap ${tx.status === 'voided' ? 'text-gray-400 line-through' : tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {tx.type === 'income' ? '+' : '-'}${Number(tx.amount).toLocaleString('es-CO')}
-                        {tx.status === 'voided' && <span className="block text-[10px] text-gray-400 uppercase">Anulado</span>}
-                      </td>
-                    </tr>
-                  ))}
-                  {(!activeShift.transactions || activeShift.transactions.length === 0) && (
-                    <tr>
-                      <td colSpan={4} className="py-8 text-center">
-                        <div className="flex flex-col items-center justify-center text-gray-400">
-                          <Wallet className="h-8 w-8 mb-2 text-gray-300" />
-                          <p className="font-semibold text-gray-700 text-sm">Aún no hay movimientos en este turno</p>
-                          <p className="text-xs text-gray-400 mt-0.5">Los cobros de pases diarios, socios y ventas de tienda se registrarán aquí.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ADMIN OPTIONAL SHIFT OPENING */}
-      {!activeShift && userRole === 'owner' && (
-        <div className="w-full flex justify-end">
-           <button onClick={() => setShowOpenShift(true)} className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl font-bold hover:bg-blue-100 transition border border-blue-200">
-             <Wallet size={18} /> Abrir Turno de Caja (Opcional)
-           </button>
-        </div>
-      )}
-
-      {scanResult ? (
-        <div className={`w-full rounded-3xl shadow-2xl p-6 sm:p-12 flex flex-col items-center justify-center transition-all duration-300 ${scanResult.success ? 'bg-green-500' : (scanResult as any).antiPassbackViolation ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'} text-white min-h-[400px]`}>
-           <div className={`h-[150px] w-[150px] rounded-full bg-white/20 flex items-center justify-center text-white mb-6 shadow-inner border-4 ${scanResult.success ? 'border-green-300' : (scanResult as any).antiPassbackViolation ? 'border-yellow-300' : 'border-red-300'} overflow-hidden relative`}>
-              {scanResult.member?.photoUrl ? (
-                <img src={scanResult.member.photoUrl} alt="avatar" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex flex-col items-center justify-center w-full h-full bg-gray-200 text-gray-400">
-                   <User size={80} />
-                   <div className="absolute bottom-4 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-bold flex items-center gap-1">⚠️ Sin Foto</div>
-                </div>
-              )}
-           </div>
-           
-           {!scanResult.member?.photoUrl && scanResult.member && (
-             <button className="mb-4 bg-white/20 hover:bg-white/30 px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition">Capturar / Subir Foto</button>
-           )}
-
-           <h2 className="text-3xl sm:text-4xl font-extrabold mb-2 text-center break-words max-w-full">{scanResult.member?.fullName || 'Desconocido'}</h2>
-           <p className="text-lg opacity-80 mb-4 font-mono">{scanResult.member?.documentId}</p>
-           
-           <p className="text-xl font-semibold opacity-90 text-center uppercase tracking-wider mt-2 bg-black/20 px-6 py-3 rounded-2xl w-full max-w-md break-words">
-             {scanResult.message}
-           </p>
-           
-           {scanResult.member && (
-             <div className="mt-6">
-                {scanResult.success ? (
-                  <span className="bg-green-700 text-white px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wider shadow-lg">🟢 ACCESO PERMITIDO</span>
-                ) : (scanResult as any).antiPassbackViolation ? (
-                  <span className="bg-yellow-600 text-white px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wider shadow-lg">🟡 INGRESO DUPLICADO</span>
-                ) : (
-                  <span className="bg-red-700 text-white px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wider shadow-lg">🔴 ACCESO DENEGADO</span>
-                )}
-             </div>
-           )}
-        </div>
-      ) : (
-        <div className="w-full bg-white rounded-3xl shadow-xl p-5 sm:p-8 border border-gray-100">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Control de Recepción</h1>
-            <p className="text-gray-500 mt-2 font-medium">Lectura de código QR o Cédula</p>
-          </div>
-
-          {!scannerOpen ? (
-            <div className="flex flex-col items-center gap-6">
-               <form 
-                 onSubmit={async (e) => {
-                   e.preventDefault();
-                   if (!inputValue) return;
-                   await handleValidation(inputValue, 'manual_doc');
-                 }}
-                 className="relative w-full max-w-md flex items-center"
-               >
-                 <Keyboard className="absolute left-5 text-gray-400 h-6 w-6" />
-                 <input 
-                   ref={inputRef}
-                   value={inputValue}
-                   onChange={(e) => setInputValue(e.target.value)}
-                   placeholder="Pistola USB / Digitar cédula..."
-                   className="w-full pl-14 pr-28 py-4 text-xl rounded-2xl text-slate-900 font-semibold placeholder:text-slate-400 bg-white [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset] [&:-webkit-autofill]:text-fill-slate-900 border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition shadow-sm"
-                   disabled={!activeShift && userRole !== 'owner'}
-                 />
-                 <button 
-                   type="submit" 
-                   disabled={!inputValue || (!activeShift && userRole !== 'owner')}
-                   className="absolute right-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-medium px-4 py-2.5 rounded-xl text-sm flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
-                 >
-                   Buscar
-                 </button>
-               </form>
-               
-               <div className="flex items-center gap-4 text-gray-400 w-full max-w-md mt-2">
-                  <div className="h-px bg-gray-200 flex-1"></div>
-                  <span className="text-sm font-semibold uppercase tracking-wider">Operaciones</span>
-                  <div className="h-px bg-gray-200 flex-1"></div>
-               </div>
-
-               <button 
-                 disabled={!activeShift && userRole !== 'owner'} 
-                 onClick={() => setShowWalkInRegister(true)} 
-                 title="Inscribir socio nuevo y asignarle un plan comercial"
-                 className="group flex flex-col w-full max-w-md bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white p-4 rounded-2xl font-bold disabled:opacity-50 transition-all shadow-md active:scale-[0.99] text-left"
-               >
-                 <div className="flex items-center justify-between w-full">
-                   <span className="flex items-center gap-2 text-base sm:text-lg">
-                     <User className="h-5 w-5" /> Registrar Nuevo Socio
-                   </span>
-                   <span className="text-[11px] font-bold uppercase tracking-wider bg-white/20 text-white px-2.5 py-0.5 rounded-full backdrop-blur-sm">
-                     Membresía
-                   </span>
-                 </div>
-                 <span className="text-xs text-indigo-100 font-normal mt-1">
-                   Crea la ficha del cliente, asigna plan y genera su carnet QR digital
-                 </span>
-               </button>
-
-               <button 
-                 disabled={!activeShift && userRole !== 'owner'} 
-                 onClick={() => setScannerOpen(true)} 
-                 title="Escanear código QR del carnet digital con la cámara"
-                 className="group flex flex-col w-full max-w-md bg-gray-900 hover:bg-gray-800 text-white p-4 rounded-2xl font-bold disabled:opacity-50 transition-all shadow-md active:scale-[0.99] text-left"
-               >
-                 <div className="flex items-center justify-between w-full">
-                   <span className="flex items-center gap-2 text-base sm:text-lg">
-                     <QrCode className="h-5 w-5 text-emerald-400" /> Activar Cámara / Escáner QR
-                   </span>
-                   <span className="text-[11px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
-                     Automático
-                   </span>
-                 </div>
-                 <span className="text-xs text-gray-300 font-normal mt-1">
-                   Valida ingresos leyendo el carnet QR en el celular del socio
-                 </span>
-               </button>
-
-               <button 
-                 disabled={!activeShift && userRole !== 'owner'} 
-                 onClick={() => setShowQuickPass(true)} 
-                 title="Cobro rápido de visita de 1 día para visitantes no inscritos"
-                 className="group flex flex-col w-full max-w-md bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-2xl font-bold disabled:opacity-50 transition-all shadow-md active:scale-[0.99] text-left"
-               >
-                 <div className="flex items-center justify-between w-full">
-                   <span className="flex items-center gap-2 text-base sm:text-lg">
-                     <DollarSign className="h-5 w-5 text-amber-300" /> Cobrar Día / Visita Exprés
-                   </span>
-                   <span className="text-[11px] font-bold uppercase tracking-wider bg-white/20 text-amber-200 px-2.5 py-0.5 rounded-full">
-                     Sin Registro
-                   </span>
-                 </div>
-                 <span className="text-xs text-emerald-100 font-normal mt-1">
-                   Cobro inmediato de 1 día para visitantes sin papeleo
-                 </span>
-               </button>
-
-               <button 
-                 disabled={!activeShift && userRole !== 'owner'} 
-                 onClick={() => setShowStore(true)} 
-                 title="Venta de bebidas, aguas, suplementos o snacks en el mostrador"
-                 className="group flex flex-col w-full max-w-md bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-2xl font-bold disabled:opacity-50 transition-all shadow-md active:scale-[0.99] text-left"
-               >
-                 <div className="flex items-center justify-between w-full">
-                   <span className="flex items-center gap-2 text-base sm:text-lg">
-                     <ShoppingCart className="h-5 w-5 text-purple-200" /> Tienda / Venta de Mostrador
-                   </span>
-                   <span className="text-[11px] font-bold uppercase tracking-wider bg-white/20 text-purple-200 px-2.5 py-0.5 rounded-full">
-                     Inventario
-                   </span>
-                 </div>
-                 <span className="text-xs text-purple-100 font-normal mt-1">
-                   Venta directa de bebidas energéticas, agua, barritas o toallas
-                 </span>
-               </button>
-               
-               {!activeShift && userRole !== 'owner' && <div className="text-red-500 font-bold mt-2 animate-pulse">¡Debes Abrir Turno para operar!</div>}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center">
-               <div id="reader" className="w-full max-w-md rounded-2xl overflow-hidden shadow-sm bg-white border border-gray-200 p-2 text-slate-800 [&_a]:text-blue-600 [&_button]:mt-4 [&_button]:bg-blue-600 [&_button]:text-white [&_button]:px-4 [&_button]:py-2 [&_button]:rounded-lg [&_select]:p-2 [&_select]:rounded-lg [&_select]:bg-slate-100 [&_select]:border [&_select]:border-slate-300 [&_select]:text-slate-900 [&_span]:text-slate-700"></div>
-               <button onClick={() => setScannerOpen(false)} className="mt-6 text-gray-600 hover:bg-gray-100 font-bold px-8 py-3 rounded-xl transition">Cerrar Cámara</button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* MODALS */}
-      {showOpenShift && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
-            {userRole === 'owner' && <button onClick={() => setShowOpenShift(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>}
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Wallet className="text-blue-600" /> Abrir Turno de Caja</h2>
-            <form action={async (formData) => {
-              const res = await openShift(formData);
-              if (res.success) { window.location.reload(); }
-              else { showToast((res as any).message || 'Error al abrir el turno.', 'error'); }
-            }} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Efectivo Inicial / Base ($)</label>
-                <input name="initialCash" type="number" required defaultValue="50000" className="w-full border-2 rounded-xl p-3" autoFocus />
-              </div>
-              <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition">Abrir Turno y Comenzar</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showCloseShift && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
-            <button onClick={() => setShowCloseShift(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Lock className="text-gray-900" /> Arqueo y Cierre</h2>
-            <div className="bg-gray-50 p-4 rounded-xl mb-6 text-center border">
-              <p className="text-sm text-gray-500 uppercase font-bold">Efectivo Esperado del Sistema</p>
-              <p className="text-3xl font-black text-gray-800">${activeShift.expectedCash.toLocaleString('es-CO')}</p>
-            </div>
-            <form action={async (formData) => {
-              const res = await closeShift(formData);
-              if (res.success) { window.location.reload(); }
-              else { showToast((res as any).message || 'Error al cerrar el turno.', 'error'); }
-            }} className="space-y-4">
-              <input type="hidden" name="shiftId" value={activeShift.id} />
-              <input type="hidden" name="expected" value={activeShift.expectedCash} />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Efectivo Fisico Contado ($)</label>
-                <input name="counted" type="number" required defaultValue={activeShift.expectedCash} className="w-full border-2 rounded-xl p-3 focus:ring-gray-900" autoFocus />
-              </div>
-              <button type="submit" className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-gray-800 transition mt-4">Confirmar y Cerrar Turno</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showExpense && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
-            <button onClick={() => setShowExpense(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><MinusCircle className="text-red-600" /> Registrar Gasto Menor</h2>
-            <form action={async (formData) => { 
-                setIsSubmittingExpense(true);
-                const res = await registerMinorExpense(formData);
-                setIsSubmittingExpense(false);
-                if (res.success) {
-                  setShowExpense(false);
-                  showToast('Gasto registrado correctamente.', 'success');
-                } else {
-                  showToast((res as any).message || 'Error al registrar el gasto.', 'error');
-                }
-              }} className="space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripcion del Gasto</label>
-                <input name="description" required placeholder="Ej: Botellón de agua" className="w-full border-2 rounded-xl p-3" autoFocus />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Monto Retirado ($)</label>
-                <input name="amount" type="number" required className="w-full border-2 rounded-xl p-3" />
-              </div>
-              <button disabled={isSubmittingExpense} type="submit" className="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition mt-4 disabled:opacity-50">
-                {isSubmittingExpense ? 'Procesando...' : 'Registrar Gasto (Resta de Caja)'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* QUICK PASS MODAL */}
-      {showQuickPass && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
-            <button onClick={() => setShowQuickPass(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6"><DollarSign className="inline text-green-600" /> Visita Exprés</h2>
-            <form action={async (formData) => { 
-                setIsSubmittingQuickPass(true); 
-                const res = await registerQuickPass(formData); 
-                setIsSubmittingQuickPass(false); 
-                setShowQuickPass(false); 
-                setScanResult(res as unknown as AttendanceResult); 
-              }} className="space-y-4"
-            >
-              <input name="documentId" required placeholder="Cédula" className="w-full border-2 rounded-xl p-3" autoFocus />
-              <input name="fullName" required placeholder="Nombre Completo" className="w-full border-2 rounded-xl p-3" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input name="amount" type="number" required defaultValue="10000" className="w-full border-2 rounded-xl p-3" placeholder="Monto" />
-                <select name="method" className="w-full border-2 rounded-xl p-3 bg-white">
-                  <option value="cash">Efectivo</option>
-                  <option value="transfer">Transferencia</option>
-                </select>
-              </div>
-              <select name="coachId" className="w-full border-2 rounded-xl p-3 bg-white">
-                <option value="">Sin entrenador</option>
-                {coaches.map((c: any) => <option key={c.id} value={c.id}>{c.fullName}</option>)}
-              </select>
-              <button disabled={isSubmittingQuickPass} type="submit" className="w-full bg-green-600 text-white font-bold py-4 rounded-xl mt-4 disabled:opacity-50">
-                {isSubmittingQuickPass ? 'Procesando...' : 'Cobrar y Dar Acceso'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* STORE MODAL */}
-      {showStore && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto">
-            <button onClick={() => setShowStore(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6"><ShoppingCart className="inline text-purple-600" /> Venta de Mostrador</h2>
-            <form action={async (formData) => {
-                setIsSubmittingStore(true);
-                const res = await sellProduct(formData);
-                setIsSubmittingStore(false);
-                setShowStore(false);
-                setScanResult({ success: res.success, message: res.message || '', member: undefined });
-              }} className="space-y-4"
-            >
-              <select name="productId" required className="w-full border-2 rounded-xl p-3 bg-white" onChange={(e) => {
-                  const p = products.find(prod => prod.id === e.target.value);
-                  if (p) {
-                    const qtyInput = document.getElementById('store-qty') as HTMLInputElement;
-                    const amountInput = document.getElementById('store-amount') as HTMLInputElement;
-                    if (amountInput && qtyInput) amountInput.value = (Number(p.price) * Number(qtyInput.value)).toString();
-                  }
-              }}>
-                <option value="">-- Selecciona un producto --</option>
-                {products.map(p => <option key={p.id} value={p.id}>{p.name} - ${Number(p.price).toLocaleString('es-CO')}</option>)}
-              </select>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-500 mb-1">Cantidad</label>
-                  <input id="store-qty" name="quantity" type="number" min="1" defaultValue="1" required className="w-full border-2 rounded-xl p-3" onChange={(e) => {
-                      const qty = Number(e.target.value);
-                      const pId = (document.querySelector('select[name="productId"]') as HTMLSelectElement)?.value;
-                      const p = products.find(prod => prod.id === pId);
-                      if (p) {
-                        const amountInput = document.getElementById('store-amount') as HTMLInputElement;
-                        if (amountInput) amountInput.value = (Number(p.price) * qty).toString();
-                      }
-                  }} />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-500 mb-1">Total ($)</label>
-                  <input id="store-amount" name="amount" type="number" readOnly className="w-full border-2 rounded-xl p-3 bg-gray-100" />
-                </div>
-              </div>
-              
-              <select name="method" required className="w-full border-2 rounded-xl p-3 bg-white mt-4">
-                <option value="cash">Efectivo</option>
-                <option value="transfer">Transferencia</option>
-              </select>
-              
-              <button disabled={isSubmittingStore} type="submit" className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl mt-4 disabled:opacity-50">
-                {isSubmittingStore ? 'Procesando...' : 'Procesar Venta Rápida'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-      {showWalkInRegister && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full relative max-h-[95dvh] flex flex-col overflow-hidden">
-            <div className="p-5 sm:p-8 border-b relative">
-              <button onClick={() => setShowWalkInRegister(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600"><X size={24} /></button>
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">👤 Registro Rápido</h2>
-              <p className="text-sm text-gray-500 mt-1">Crea un socio y registra su primer pago de inmediato.</p>
-            </div>
-            
-            <WalkInRegisterForm 
-              plans={plans} 
-              onClose={() => setShowWalkInRegister(false)} 
-              onSuccess={(data) => {
-                setShowWalkInRegister(false);
-                const msg = encodeURIComponent(`¡Hola ${data.fullName}! Tu registro en SupraData fue exitoso. Accede a tu carnet digital aquí: ${window.location.origin}/pass/${data.passToken}`);
-                const whatsappUrl = `https://wa.me/57${data.phone}?text=${msg}`;
-                
-                showToast('Socio registrado correctamente.', 'success');
-                
-                const w = window.open(whatsappUrl, '_blank');
-                if(!w) alert('El navegador bloqueó la ventana emergente de WhatsApp. Por favor ábrela manualmente.');
-                
-                setTimeout(() => window.location.reload(), 2000);
-              }} 
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// --------------------------------------------------------------------------------------
-// COMPONENTE SECUNDARIO PARA EL FORMULARIO DE REGISTRO RÁPIDO CON CÁMARA
-// --------------------------------------------------------------------------------------
-import { registerWalkInMember } from '@/app/actions/members';
-
-function WalkInRegisterForm({ plans, onClose, onSuccess }: { plans: any[], onClose: () => void, onSuccess: (data: any) => void }) {
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-
-  const startCamera = async (mode = facingMode) => {
+  // Camera handlers for walk-in member
+  const startCamera = async () => {
     try {
       if (videoRef.current && videoRef.current.srcObject) {
         const currentStream = videoRef.current.srcObject as MediaStream;
-        currentStream.getTracks().forEach(track => track.stop());
+        currentStream.getTracks().forEach((track) => track.stop());
       }
       setCameraActive(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: mode }, width: 720, height: 720 } });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'user' }, width: 640, height: 640 },
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
       }
     } catch (err) {
       console.error('Error starting camera', err);
-      alert('No se pudo acceder a la cámara. Asegúrate de dar permisos.');
+      alert('No se pudo acceder a la cámara. Asegúrate de dar permisos en el navegador.');
       setCameraActive(false);
     }
   };
@@ -614,7 +199,7 @@ function WalkInRegisterForm({ plans, onClose, onSuccess }: { plans: any[], onClo
   const stopCamera = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
     }
     setCameraActive(false);
   };
@@ -623,16 +208,14 @@ function WalkInRegisterForm({ plans, onClose, onSuccess }: { plans: any[], onClo
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
       const size = Math.min(video.videoWidth, video.videoHeight);
       const startX = (video.videoWidth - size) / 2;
       const startY = (video.videoHeight - size) / 2;
-
-      canvas.width = 800;
-      canvas.height = 800;
+      canvas.width = 600;
+      canvas.height = 600;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.drawImage(video, startX, startY, size, size, 0, 0, 800, 800);
+        ctx.drawImage(video, startX, startY, size, size, 0, 0, 600, 600);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         setPhotoUrl(dataUrl);
         stopCamera();
@@ -649,126 +232,994 @@ function WalkInRegisterForm({ plans, onClose, onSuccess }: { plans: any[], onClo
     }
   };
 
-  const handleSubmit = async (formData: FormData) => {
-    setIsSubmitting(true);
-    setErrorMsg('');
-    if (photoUrl) {
-      formData.append('photoUrl', photoUrl);
-    }
-    
-    const res = await registerWalkInMember(formData);
-    setIsSubmitting(false);
-    
-    if (res.success && res.data) {
-      onSuccess(res.data);
-    } else {
-      setErrorMsg(!res.success ? res.error : 'Ocurrió un error inesperado');
+  // Form submit handlers
+  const handleQuickPassSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmittingQuickPass(true);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const res = await registerQuickPass(formData);
+      setIsSubmittingQuickPass(false);
+      setScanResult(res as unknown as AttendanceResult);
+      showToast('Cobro diario registrado con éxito.', 'success');
+      (e.target as HTMLFormElement).reset();
+    } catch {
+      setIsSubmittingQuickPass(false);
+      showToast('Error al procesar el pase diario.', 'error');
     }
   };
 
-  useEffect(() => {
-    return () => stopCamera();
-  }, []);
+  const handleStoreSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmittingStore(true);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const res = await sellProduct(formData);
+      setIsSubmittingStore(false);
+      if (res.success) {
+        showToast(res.message || 'Venta registrada con éxito.', 'success');
+        setScanResult({ success: true, message: res.message || 'Venta registrada' });
+        (e.target as HTMLFormElement).reset();
+        setSelectedProduct(null);
+        setStoreQty(1);
+      } else {
+        showToast(res.message || 'Error al procesar la venta.', 'error');
+      }
+    } catch {
+      setIsSubmittingStore(false);
+      showToast('Error al registrar la venta en el sistema.', 'error');
+    }
+  };
+
+  const handleWalkInSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmittingMember(true);
+    try {
+      const formData = new FormData(e.currentTarget);
+      if (photoUrl) {
+        formData.append('photoUrl', photoUrl);
+      }
+      const res = await registerWalkInMember(formData);
+      setIsSubmittingMember(false);
+      if (res.success && res.data) {
+        showToast(`Socio ${res.data.fullName} registrado correctamente.`, 'success');
+        const passUrl = `${window.location.origin}/pass/${res.data.passToken}`;
+        const msg = encodeURIComponent(
+          `¡Hola ${res.data.fullName}! Tu registro en SupraData fue exitoso. Accede a tu carnet digital aquí: ${passUrl}`
+        );
+        window.open(`https://wa.me/57${res.data.phone}?text=${msg}`, '_blank');
+        setPhotoUrl(null);
+        (e.target as HTMLFormElement).reset();
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        showToast(!res.success ? res.error : 'Ocurrió un error al registrar el socio.', 'error');
+      }
+    } catch {
+      setIsSubmittingMember(false);
+      showToast('Error inesperado al registrar el socio.', 'error');
+    }
+  };
 
   return (
-    <div className="flex-1 overflow-y-auto p-5 sm:p-8">
-      {errorMsg && <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 font-bold text-sm border border-red-200">{errorMsg}</div>}
-      
-      <form action={handleSubmit} className="space-y-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* LADO IZQUIERDO: FOTO ANTIFRAUDE */}
-          <div className="flex flex-col items-center gap-4 w-full md:w-1/3">
-             <div className="w-40 h-40 bg-gray-100 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 relative flex items-center justify-center">
-               {photoUrl ? (
-                 <img src={photoUrl} className="w-full h-full object-cover" alt="Socio" />
-               ) : cameraActive ? (
-                 <>
-                   <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
-                   <button 
-                     type="button" 
-                     onClick={() => {
-                       const newMode = facingMode === 'user' ? 'environment' : 'user';
-                       setFacingMode(newMode);
-                       startCamera(newMode);
-                     }}
-                     className="absolute top-2 right-2 z-20 bg-black/60 text-white p-1.5 rounded-full backdrop-blur-md hover:bg-black/80 transition"
-                   >
-                     <RefreshCw size={16} />
-                   </button>
-                 </>
-               ) : (
-                 <User className="text-gray-300" size={64} />
-               )}
-               <canvas ref={canvasRef} className="hidden" />
-             </div>
-             
-             {cameraActive ? (
-               <div className="flex gap-2">
-                 <button type="button" onClick={takePhoto} className="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl">📸 Capturar</button>
-                 <button type="button" onClick={stopCamera} className="bg-gray-200 text-gray-700 text-xs font-bold px-4 py-2 rounded-xl">Cancelar</button>
-               </div>
-             ) : (
-               <div className="flex flex-col gap-2 w-full">
-                 <button type="button" onClick={() => startCamera()} className="bg-blue-50 text-blue-600 hover:bg-blue-100 transition text-sm font-bold px-4 py-2 rounded-xl border border-blue-200 flex items-center justify-center gap-2">
-                    📸 Abrir Cámara
-                 </button>
-                 <label className="bg-gray-100 hover:bg-gray-200 cursor-pointer transition text-gray-600 text-sm font-bold px-4 py-2 rounded-xl text-center">
-                    Subir Archivo
-                    <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-                 </label>
-               </div>
-             )}
-             {photoUrl && (
-               <button type="button" onClick={() => setPhotoUrl(null)} className="text-red-500 text-xs font-bold hover:underline">Eliminar foto</button>
-             )}
-          </div>
+    <div className="space-y-6">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-          {/* LADO DERECHO: DATOS */}
-          <div className="w-full md:w-2/3 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-              <input name="fullName" required className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej. Juan Pérez" />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cédula / Doc.</label>
-                <input name="documentId" required className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej. 10203040" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
-                <input name="phone" required type="tel" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej. 3001234567" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
-                <select name="planId" required className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                  <option value="">Selecciona...</option>
-                  {plans.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} - ${Number(p.price).toLocaleString('es-CO')}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
-                <select name="method" required className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                  <option value="cash">💵 Efectivo</option>
-                  <option value="transfer">🏦 Transferencia</option>
-                </select>
-              </div>
-            </div>
-          </div>
+      {/* TOP HEADER & LIVE METRICS BAR */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">Mostrador de Recepción</h1>
+          <p className="text-xs text-slate-500">
+            Control de accesos en tiempo real, validación de carnets y cobros de mostrador
+          </p>
         </div>
 
-        <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
-           <button type="button" onClick={onClose} className="px-6 py-3 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition">Cancelar</button>
-           <button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-8 py-3 rounded-xl font-bold transition shadow-md">
-             {isSubmitting ? 'Guardando...' : 'Crear Socio y Cobrar'}
-           </button>
+        {/* Live Metrics Chips & Shift Status */}
+        <div className="flex items-center flex-wrap gap-2">
+          {liveMetrics && (
+            <>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200/80 text-xs shadow-2xs">
+                <span className="text-[10px] uppercase font-bold text-slate-400">Aforo:</span>
+                <span className="font-bold tabular-nums text-slate-900">
+                  {liveMetrics.peopleInGymCount}
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200/80 text-xs shadow-2xs">
+                <span className="text-[10px] uppercase font-bold text-slate-400">Activos:</span>
+                <span className="font-bold tabular-nums text-emerald-600">
+                  {liveMetrics.activeMembersCount}
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200/80 text-xs shadow-2xs">
+                <span className="text-[10px] uppercase font-bold text-slate-400">Por Vencer:</span>
+                <span className="font-bold tabular-nums text-amber-600">
+                  {liveMetrics.expiringSoonCount}
+                </span>
+              </div>
+            </>
+          )}
+
+          {activeShift ? (
+            <div className="inline-flex items-center gap-2 pl-2.5 pr-1.5 py-1 rounded-md bg-slate-900 text-white text-xs shadow-2xs">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-medium text-slate-200">
+                Caja: ${activeShift.expectedCash.toLocaleString('es-CO')}
+              </span>
+              <div className="flex items-center gap-1 border-l border-slate-700 pl-1.5">
+                <button
+                  onClick={() => setShowExpense(true)}
+                  className="px-1.5 py-0.5 rounded text-[10px] font-semibold text-rose-300 hover:text-white hover:bg-slate-800 transition"
+                  title="Registrar gasto menor"
+                >
+                  - Gasto
+                </button>
+                <button
+                  onClick={() => setShowCloseShift(true)}
+                  className="px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition"
+                  title="Arqueo y cierre de turno"
+                >
+                  Cerrar Turno
+                </button>
+              </div>
+            </div>
+          ) : userRole === 'owner' ? (
+            <button
+              onClick={() => setShowOpenShift(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold shadow-2xs transition"
+            >
+              <Wallet className="h-3.5 w-3.5 text-slate-300" />
+              Abrir Turno de Caja
+            </button>
+          ) : (
+            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+              <AlertTriangle className="h-3.5 w-3.5" /> Turno no iniciado
+            </div>
+          )}
         </div>
-      </form>
+      </div>
+
+      {/* SPLIT SCREEN LAYOUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* ========================================================================= */}
+        {/* COLUMNA IZQUIERDA: MONITOR DE ACCESO / VALIDACIÓN (7 cols)                 */}
+        {/* ========================================================================= */}
+        <div className="lg:col-span-7 space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+            {/* Monitor Header */}
+            <div className="px-5 py-3.5 bg-slate-50/75 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ScanLine className="h-4 w-4 text-slate-700" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+                  Monitor de Validación
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  {scannerOpen ? 'Cámara Activa' : 'Lector Listo'}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setScannerOpen(!scannerOpen)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 border border-slate-200/80 rounded-md transition shadow-2xs"
+              >
+                <Camera className="h-3.5 w-3.5 text-slate-500" />
+                <span>{scannerOpen ? 'Ocultar Cámara' : 'Cámara QR'}</span>
+              </button>
+            </div>
+
+            {/* Input de Pistola USB / Búsqueda Manual */}
+            <div className="p-5 border-b border-slate-100">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!inputValue) return;
+                  await handleValidation(inputValue, 'manual_doc');
+                }}
+                className="relative flex items-center"
+              >
+                <Keyboard className="absolute left-3.5 h-4 w-4 text-slate-400" />
+                <input
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Escanear pistola USB o digitar cédula / ID..."
+                  disabled={!activeShift && userRole !== 'owner'}
+                  className="w-full pl-10 pr-24 py-2 text-sm font-medium rounded-lg text-slate-900 placeholder:text-slate-400 bg-slate-50/60 border border-slate-200 focus:border-slate-900 focus:bg-white focus:ring-1 focus:ring-slate-900 outline-none transition disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={!inputValue || (!activeShift && userRole !== 'owner')}
+                  className="absolute right-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white text-xs font-semibold px-3 py-1.5 rounded-md transition shadow-2xs"
+                >
+                  Validar
+                </button>
+              </form>
+              <p className="text-[11px] text-slate-400 mt-1.5 pl-1">
+                Presiona Enter tras disparar el lector de código de barras o código QR.
+              </p>
+            </div>
+
+            {/* Monitor Display Area (Camera OR Member Validation Card OR Idle Status) */}
+            <div className="p-5 min-h-[340px] flex flex-col justify-center">
+              {scannerOpen ? (
+                <div className="flex flex-col items-center">
+                  <div
+                    id="reader"
+                    className="w-full max-w-sm rounded-xl overflow-hidden border border-slate-200 p-2 text-slate-800 [&_button]:bg-slate-900 [&_button]:text-white [&_button]:text-xs [&_button]:px-3 [&_button]:py-1.5 [&_button]:rounded-md [&_select]:text-xs [&_select]:p-1.5 [&_select]:border [&_select]:rounded-md"
+                  />
+                  <button
+                    onClick={() => setScannerOpen(false)}
+                    className="mt-4 text-xs font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md border border-slate-200"
+                  >
+                    Cerrar Visor de Cámara
+                  </button>
+                </div>
+              ) : scanResult ? (
+                /* TARJETA TÉCNICA DEL SOCIO VALIDADO */
+                <div
+                  className={`rounded-xl p-5 border transition-all ${
+                    scanResult.success
+                      ? 'bg-emerald-50/60 border-emerald-200'
+                      : (scanResult as any).antiPassbackViolation
+                      ? 'bg-amber-50/60 border-amber-200'
+                      : 'bg-rose-50/60 border-rose-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      {/* Foto del Socio */}
+                      <div className="h-18 w-18 rounded-xl bg-white border border-slate-200 shadow-2xs overflow-hidden shrink-0 flex items-center justify-center relative">
+                        {scanResult.member?.photoUrl ? (
+                          <img
+                            src={scanResult.member.photoUrl}
+                            alt="Foto socio"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-slate-400">
+                            <User className="h-8 w-8 text-slate-300" />
+                            <span className="text-[9px] font-bold text-slate-400 uppercase">
+                              Sin Foto
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info del Socio */}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-bold text-slate-900">
+                            {scanResult.member?.fullName || 'Visitante no registrado'}
+                          </h3>
+                        </div>
+
+                        {scanResult.member?.documentId && (
+                          <p className="text-xs font-mono text-slate-500">
+                            ID: {scanResult.member.documentId}
+                          </p>
+                        )}
+
+                        <div className="pt-1">
+                          <span
+                            className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                              scanResult.success
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                : (scanResult as any).antiPassbackViolation
+                                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                : 'bg-rose-100 text-rose-800 border-rose-300'
+                            }`}
+                          >
+                            {scanResult.success
+                              ? '🟢 Acceso Permitido'
+                              : (scanResult as any).antiPassbackViolation
+                              ? '🟡 Ingreso Duplicado'
+                              : '🔴 Acceso Denegado'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setScanResult(null)}
+                      className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+                      title="Cerrar resultado"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Detalle del Mensaje */}
+                  <div className="mt-4 p-3 bg-white/80 rounded-lg border border-slate-200/80 text-xs font-medium text-slate-700 flex items-center justify-between">
+                    <span>{scanResult.message}</span>
+                    <span className="text-[10px] text-slate-400">
+                      {new Date().toLocaleTimeString('es-CO', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                /* ESTADO EN ESPERA (IDLE) */
+                <div className="h-full flex flex-col items-center justify-center text-center py-10 px-4">
+                  <div className="h-12 w-12 rounded-xl bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-500 mb-3 shadow-2xs">
+                    <QrCode className="h-6 w-6 text-slate-600" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    Lector en espera de escaneo
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-sm mt-1">
+                    Apunta la pistola USB al código QR del socio o digita su número de cédula en la barra
+                    superior para validar vigencia.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* MOVIMIENTOS RECIENTES DEL TURNO (Format: High-density compact table) */}
+          {activeShift && (
+            <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div className="px-5 py-3 bg-slate-50/75 border-b border-slate-100 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Movimientos del Turno Actual
+                </span>
+                <span className="text-xs text-slate-500">
+                  {activeShift.transactions?.length || 0} operaciones
+                </span>
+              </div>
+
+              <div className="overflow-x-auto max-h-56 overflow-y-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50/50 text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                    <tr>
+                      <th className="py-2 px-4">Hora</th>
+                      <th className="py-2 px-4">Detalle</th>
+                      <th className="py-2 px-4">Método</th>
+                      <th className="py-2 px-4 text-right">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs">
+                    {activeShift.transactions?.map((tx: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="py-2 px-4 text-slate-500 tabular-nums">
+                          {new Date(tx.date).toLocaleTimeString('es-CO', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="py-2 px-4 font-medium text-slate-800 truncate max-w-[200px]">
+                          {tx.description}
+                        </td>
+                        <td className="py-2 px-4">
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                              tx.method === 'cash'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-blue-50 text-blue-700'
+                            }`}
+                          >
+                            {tx.method === 'cash' ? 'Efectivo' : 'Transf.'}
+                          </span>
+                        </td>
+                        <td
+                          className={`py-2 px-4 text-right font-bold tabular-nums ${
+                            tx.status === 'voided'
+                              ? 'text-slate-400 line-through'
+                              : tx.type === 'income'
+                              ? 'text-emerald-600'
+                              : 'text-rose-600'
+                          }`}
+                        >
+                          {tx.type === 'income' ? '+' : '-'}${Number(tx.amount).toLocaleString('es-CO')}
+                        </td>
+                      </tr>
+                    ))}
+                    {(!activeShift.transactions || activeShift.transactions.length === 0) && (
+                      <tr>
+                        <td colSpan={4} className="py-6 text-center text-slate-400 text-xs">
+                          No hay transacciones registradas en este turno aún.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ========================================================================= */}
+        {/* COLUMNA DERECHA: ACCIONES RÁPIDAS DE MOSTRADOR (5 cols)                    */}
+        {/* ========================================================================= */}
+        <div className="lg:col-span-5 space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+            {/* Header con Pestañas Técnicas Compactas */}
+            <div className="p-3 bg-slate-50/75 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-1 w-full bg-slate-200/60 p-0.5 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('register')}
+                  className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition-all text-center ${
+                    activeTab === 'register'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Registrar Socio
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('quickPass')}
+                  className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition-all text-center ${
+                    activeTab === 'quickPass'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Cobro Diario
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('store')}
+                  className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition-all text-center ${
+                    activeTab === 'store'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Venta Tienda
+                </button>
+              </div>
+            </div>
+
+            {/* TAB 1: REGISTRAR SOCIO */}
+            {activeTab === 'register' && (
+              <form onSubmit={handleWalkInSubmit} className="p-5 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">Inscripción y Membresía</h2>
+                    <p className="text-[11px] text-slate-500">
+                      Crea la ficha del socio, asigna plan y genera su carnet QR
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cámara Antifraude Compacta */}
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center gap-3">
+                  <div className="h-16 w-16 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative">
+                    {photoUrl ? (
+                      <img src={photoUrl} alt="Foto" className="h-full w-full object-cover" />
+                    ) : cameraActive ? (
+                      <video
+                        ref={videoRef}
+                        className="h-full w-full object-cover"
+                        autoPlay
+                        playsInline
+                        muted
+                      />
+                    ) : (
+                      <User className="h-6 w-6 text-slate-300" />
+                    )}
+                    <canvas ref={canvasRef} className="hidden" />
+                  </div>
+
+                  <div className="flex-1 space-y-1">
+                    <p className="text-xs font-semibold text-slate-800">Foto del Socio (Opcional)</p>
+                    {cameraActive ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={takePhoto}
+                          className="bg-slate-900 text-white text-[11px] font-semibold px-2 py-1 rounded-md hover:bg-slate-800"
+                        >
+                          Capturar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={stopCamera}
+                          className="text-slate-600 text-[11px] px-2 py-1 rounded-md hover:bg-slate-200"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={startCamera}
+                          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium px-2 py-1 rounded-md transition shadow-2xs"
+                        >
+                          Usar Cámara
+                        </button>
+                        <label className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium px-2 py-1 rounded-md transition cursor-pointer shadow-2xs">
+                          Subir
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Nombre Completo *
+                    </label>
+                    <input
+                      name="fullName"
+                      required
+                      placeholder="Ej. Juan Pérez"
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Cédula / ID *
+                      </label>
+                      <input
+                        name="documentId"
+                        required
+                        placeholder="10203040"
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        WhatsApp *
+                      </label>
+                      <input
+                        name="phone"
+                        required
+                        type="tel"
+                        placeholder="3001234567"
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Plan *</label>
+                      <select
+                        name="planId"
+                        required
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
+                      >
+                        <option value="">Seleccionar plan...</option>
+                        {plans.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} (${Number(p.price).toLocaleString('es-CO')})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Método Pago *
+                      </label>
+                      <select
+                        name="method"
+                        required
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
+                      >
+                        <option value="cash">Efectivo</option>
+                        <option value="transfer">Transferencia</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmittingMember || (!activeShift && userRole !== 'owner')}
+                    className="w-full bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-300 text-xs font-semibold py-2 px-4 rounded-lg transition shadow-2xs flex items-center justify-center gap-1.5"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    <span>{isSubmittingMember ? 'Guardando...' : 'Registrar y Emitir Carnet'}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* TAB 2: COBRO DIARIO (QUICK PASS) */}
+            {activeTab === 'quickPass' && (
+              <form onSubmit={handleQuickPassSubmit} className="p-5 space-y-3.5">
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">Cobro de Visita / Pase Exprés</h2>
+                  <p className="text-[11px] text-slate-500">
+                    Ingreso para visitantes de un solo día sin registro de membresía completa
+                  </p>
+                </div>
+
+                <div className="space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Cédula *
+                      </label>
+                      <input
+                        name="documentId"
+                        required
+                        placeholder="Documento"
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Nombre Completo *
+                      </label>
+                      <input
+                        name="fullName"
+                        required
+                        placeholder="Nombre del visitante"
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Monto ($) *
+                      </label>
+                      <input
+                        name="amount"
+                        type="number"
+                        required
+                        defaultValue="10000"
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Método Pago *
+                      </label>
+                      <select
+                        name="method"
+                        required
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
+                      >
+                        <option value="cash">Efectivo</option>
+                        <option value="transfer">Transferencia</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Entrenador Responsable (Opcional)
+                    </label>
+                    <select
+                      name="coachId"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
+                    >
+                      <option value="">Sin entrenador asignado</option>
+                      {coaches.map((c: any) => (
+                        <option key={c.id} value={c.id}>
+                          {c.fullName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmittingQuickPass || (!activeShift && userRole !== 'owner')}
+                    className="w-full bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-300 text-xs font-semibold py-2 px-4 rounded-lg transition shadow-2xs flex items-center justify-center gap-1.5"
+                  >
+                    <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+                    <span>{isSubmittingQuickPass ? 'Procesando...' : 'Cobrar y Conceder Acceso'}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* TAB 3: VENTA TIENDA */}
+            {activeTab === 'store' && (
+              <form onSubmit={handleStoreSubmit} className="p-5 space-y-3.5">
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">Venta Rápida de Tienda</h2>
+                  <p className="text-[11px] text-slate-500">
+                    Bebidas, suplementos y accesorios de mostrador
+                  </p>
+                </div>
+
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Seleccionar Producto *
+                    </label>
+                    <select
+                      name="productId"
+                      required
+                      value={selectedProduct?.id || ''}
+                      onChange={(e) => {
+                        const p = products.find((prod) => prod.id === e.target.value);
+                        setSelectedProduct(p || null);
+                      }}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
+                    >
+                      <option value="">-- Elige un producto del inventario --</option>
+                      {products.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} - ${Number(p.price).toLocaleString('es-CO')}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Cantidad *
+                      </label>
+                      <input
+                        type="number"
+                        name="quantity"
+                        min="1"
+                        value={storeQty}
+                        onChange={(e) => setStoreQty(Math.max(1, Number(e.target.value)))}
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Total a Cobrar
+                      </label>
+                      <div className="px-3 py-1.5 text-xs font-bold text-slate-900 bg-slate-50 rounded-lg border border-slate-200 tabular-nums">
+                        $
+                        {(
+                          Number(selectedProduct?.price || 0) * storeQty
+                        ).toLocaleString('es-CO')}
+                      </div>
+                      <input
+                        type="hidden"
+                        name="amount"
+                        value={Number(selectedProduct?.price || 0) * storeQty}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Método Pago *
+                    </label>
+                    <select
+                      name="method"
+                      required
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
+                    >
+                      <option value="cash">Efectivo</option>
+                      <option value="transfer">Transferencia</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={
+                      !selectedProduct || isSubmittingStore || (!activeShift && userRole !== 'owner')
+                    }
+                    className="w-full bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-300 text-xs font-semibold py-2 px-4 rounded-lg transition shadow-2xs flex items-center justify-center gap-1.5"
+                  >
+                    <ShoppingCart className="h-3.5 w-3.5 text-blue-400" />
+                    <span>{isSubmittingStore ? 'Procesando...' : 'Registrar Venta'}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* MODALES TÉCNICOS: APERTURA, CIERRE Y GASTOS DE CAJA                      */}
+      {/* ========================================================================= */}
+
+      {/* Modal Abrir Turno */}
+      {showOpenShift && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 max-w-sm w-full relative animate-in fade-in zoom-in-95 duration-100">
+            {userRole === 'owner' && (
+              <button
+                onClick={() => setShowOpenShift(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2 rounded-lg bg-slate-100 text-slate-900">
+                <Wallet className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Apertura de Turno de Caja</h3>
+                <p className="text-[11px] text-slate-500">Ingresa la base inicial en efectivo</p>
+              </div>
+            </div>
+
+            <form
+              action={async (formData) => {
+                const res = await openShift(formData);
+                if (res.success) {
+                  window.location.reload();
+                } else {
+                  showToast((res as any).message || 'Error al abrir el turno.', 'error');
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Efectivo Base ($)
+                </label>
+                <input
+                  name="initialCash"
+                  type="number"
+                  required
+                  defaultValue="50000"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums font-semibold"
+                  autoFocus
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold py-2.5 px-4 rounded-lg transition shadow-2xs"
+              >
+                Iniciar Turno
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Cerrar Turno */}
+      {showCloseShift && activeShift && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 max-w-sm w-full relative animate-in fade-in zoom-in-95 duration-100">
+            <button
+              onClick={() => setShowCloseShift(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2 rounded-lg bg-slate-100 text-slate-900">
+                <Lock className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Arqueo y Cierre de Turno</h3>
+                <p className="text-[11px] text-slate-500">Verifica el efectivo físico presente</p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 mb-4 text-center">
+              <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                Efectivo Esperado en Sistema
+              </p>
+              <p className="text-xl font-bold tabular-nums text-slate-900 mt-0.5">
+                ${activeShift.expectedCash.toLocaleString('es-CO')}
+              </p>
+            </div>
+
+            <form
+              action={async (formData) => {
+                const res = await closeShift(formData);
+                if (res.success) {
+                  window.location.reload();
+                } else {
+                  showToast((res as any).message || 'Error al cerrar el turno.', 'error');
+                }
+              }}
+              className="space-y-4"
+            >
+              <input type="hidden" name="shiftId" value={activeShift.id} />
+              <input type="hidden" name="expected" value={activeShift.expectedCash} />
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Efectivo Físico Contado ($)
+                </label>
+                <input
+                  name="counted"
+                  type="number"
+                  required
+                  defaultValue={activeShift.expectedCash}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums font-semibold"
+                  autoFocus
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold py-2.5 px-4 rounded-lg transition shadow-2xs"
+              >
+                Confirmar y Cerrar Turno
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Gasto Menor */}
+      {showExpense && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 max-w-sm w-full relative animate-in fade-in zoom-in-95 duration-100">
+            <button
+              onClick={() => setShowExpense(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2 rounded-lg bg-rose-50 text-rose-700">
+                <MinusCircle className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Registrar Gasto Menor</h3>
+                <p className="text-[11px] text-slate-500">Salida de efectivo de la caja de turno</p>
+              </div>
+            </div>
+
+            <form
+              action={async (formData) => {
+                setIsSubmittingExpense(true);
+                const res = await registerMinorExpense(formData);
+                setIsSubmittingExpense(false);
+                if (res.success) {
+                  setShowExpense(false);
+                  showToast('Gasto registrado correctamente.', 'success');
+                } else {
+                  showToast((res as any).message || 'Error al registrar el gasto.', 'error');
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Descripción del Gasto
+                </label>
+                <input
+                  name="description"
+                  required
+                  placeholder="Ej. Compra de agua o botellón"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Monto ($)</label>
+                <input
+                  name="amount"
+                  type="number"
+                  required
+                  placeholder="5000"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums font-semibold"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmittingExpense}
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition shadow-2xs disabled:opacity-50"
+              >
+                {isSubmittingExpense ? 'Guardando...' : 'Registrar Salida de Efectivo'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

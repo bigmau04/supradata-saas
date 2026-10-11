@@ -2,19 +2,34 @@
 
 import { useState } from 'react';
 import { createProduct, toggleProductStatus, updateProduct } from '@/app/actions/products';
-import { ShoppingCart, Plus, X, Pencil, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Plus, X, Pencil, AlertTriangle, CheckCircle, Power } from 'lucide-react';
 
-function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
+function Toast({
+  message,
+  type,
+  onClose,
+}: {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}) {
   return (
-    <div className={`fixed top-4 right-4 z-[100] max-w-sm w-full shadow-2xl rounded-2xl p-4 flex items-start gap-3 border transition-all ${
-      type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'
-    }`}>
-      {type === 'error'
-        ? <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-        : <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-      }
-      <p className="text-sm font-medium flex-1">{message}</p>
-      <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="h-4 w-4" /></button>
+    <div
+      className={`fixed top-4 right-4 z-[100] max-w-sm w-full shadow-lg rounded-xl p-4 flex items-start gap-3 border backdrop-blur-md ${
+        type === 'error'
+          ? 'bg-rose-50/95 border-rose-200 text-rose-900'
+          : 'bg-emerald-50/95 border-emerald-200 text-emerald-900'
+      }`}
+    >
+      {type === 'error' ? (
+        <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+      ) : (
+        <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+      )}
+      <p className="text-xs font-medium flex-1">{message}</p>
+      <button onClick={onClose} className="text-slate-400 hover:text-slate-600 shrink-0">
+        <X className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
@@ -81,128 +96,226 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
   };
 
   return (
-    <div>
+    <div className="space-y-6 font-sans">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div className="flex justify-end mb-6">
+      {/* PAGE HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">Gestión de Tienda</h1>
+          <p className="text-xs text-slate-500">
+            Inventario de bebidas, suplementos y productos de venta en mostrador
+          </p>
+        </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition flex items-center gap-2"
+          className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2 px-3.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs self-start sm:self-auto"
         >
-          <Plus size={20} /> Nuevo Producto
+          <Plus className="h-3.5 w-3.5" />
+          <span>Nuevo Producto</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="p-4 font-semibold text-gray-600">Producto</th>
-              <th className="p-4 font-semibold text-gray-600">Precio</th>
-              <th className="p-4 font-semibold text-gray-600">Estado</th>
-              <th className="p-4 font-semibold text-gray-600 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p) => (
-              <tr key={p.id} className="border-b hover:bg-gray-50">
-                <td className="p-4 font-medium flex items-center gap-2">
-                  <ShoppingCart size={18} className="text-gray-400" />
-                  {p.name}
-                </td>
-                <td className="p-4">${Number(p.price).toLocaleString('es-CO')}</td>
-                <td className="p-4">
-                  {p.isActive
-                    ? <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Activo</span>
-                    : <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">Inactivo</span>}
-                </td>
-                <td className="p-4 text-right">
-                  <div className="flex items-center justify-end gap-3">
-                    <button
-                      onClick={() => setEditProduct(p)}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-xs font-bold transition"
-                    >
-                      <Pencil size={13} /> Editar
-                    </button>
-                    <button onClick={() => handleToggle(p.id, p.isActive)} className="text-sm font-medium text-blue-600 hover:underline">
-                      {p.isActive ? 'Desactivar' : 'Activar'}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {products.length === 0 && (
+      {/* TABLE CONTAINER */}
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left">
+            <thead className="bg-slate-50/75 text-[11px] font-semibold text-slate-500 uppercase tracking-wider py-3 px-4 border-b border-slate-100">
               <tr>
-                <td colSpan={4} className="py-12 px-4 text-center">
-                  <div className="max-w-sm mx-auto flex flex-col items-center justify-center">
-                    <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-xs border border-blue-100">
-                      <ShoppingCart className="h-8 w-8" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Aún no tienes productos en inventario</h3>
-                    <p className="text-sm text-gray-500 mb-6 text-center">
-                      Crea productos para venta rápida en recepción (bebidas hidratantes, barras de proteína, suplementos, accesorios).
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowCreateModal(true)}
-                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-xs transition active:scale-95 text-sm"
-                    >
-                      <Plus className="h-4 w-4" /> Registrar Primer Producto
-                    </button>
-                  </div>
-                </td>
+                <th className="py-3 px-4">Producto</th>
+                <th className="py-3 px-4">Precio de Venta</th>
+                <th className="py-3 px-4">Estado</th>
+                <th className="py-3 px-4 text-right">Acciones</th>
               </tr>
-            )}
-          </tbody>
-        </table></div>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {products.map((p) => (
+                <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3 px-4 font-semibold text-slate-900">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8 w-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200/60">
+                        <ShoppingCart className="h-4 w-4" />
+                      </div>
+                      <span>{p.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 font-bold text-slate-900 tabular-nums">
+                    ${Number(p.price).toLocaleString('es-CO')}
+                  </td>
+                  <td className="py-3 px-4">
+                    {p.isActive ? (
+                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
+                        Activo
+                      </span>
+                    ) : (
+                      <span className="bg-slate-100 text-slate-600 border border-slate-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
+                        Inactivo
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => setEditProduct(p)}
+                        className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition"
+                        title="Editar producto"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleToggle(p.id, p.isActive)}
+                        className={`p-1.5 rounded-md transition ${
+                          p.isActive
+                            ? 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
+                            : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
+                        }`}
+                        title={p.isActive ? 'Desactivar producto' : 'Activar producto'}
+                      >
+                        <Power className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {products.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-12 px-4 text-center">
+                    <div className="max-w-sm mx-auto flex flex-col items-center justify-center">
+                      <div className="h-10 w-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center mb-3 border border-slate-200/80">
+                        <ShoppingCart className="h-5 w-5" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-900">
+                        Aún no tienes productos en inventario
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1 mb-4">
+                        Crea productos para venta rápida en recepción (bebidas hidratantes, barras de proteína, agua).
+                      </p>
+                      <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2 px-3.5 rounded-lg transition"
+                      >
+                        + Registrar Primer Producto
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* MODAL: Crear producto */}
+      {/* MODAL: Crear Producto */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 sm:p-6 relative max-h-[90dvh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-bold text-gray-800">Nuevo Producto</h2>
-              <button onClick={() => setShowCreateModal(false)}><X size={24} className="text-gray-400 hover:text-gray-800" /></button>
-            </div>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre (ej. Agua Cristal)</label>
-                <input name="name" required className="w-full border p-2 rounded-lg" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Precio ($)</label>
-                <input name="price" type="number" min="0" step="100" required className="w-full border p-2 rounded-lg" />
-              </div>
-              <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition mt-4 disabled:opacity-60">
-                {loading ? 'Guardando...' : 'Crear Producto'}
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 w-full max-w-md max-h-[90dvh] overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h2 className="text-sm font-bold text-slate-900">Nuevo Producto de Mostrador</h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
               </button>
+            </div>
+            <form onSubmit={handleCreate} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Nombre del Producto *
+                </label>
+                <input
+                  name="name"
+                  required
+                  placeholder="Ej. Bebida Energética 500ml"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Precio de Venta ($) *
+                </label>
+                <input
+                  name="price"
+                  type="number"
+                  min="0"
+                  step="100"
+                  required
+                  placeholder="4000"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums font-semibold"
+                />
+              </div>
+              <div className="flex gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 disabled:opacity-60 transition shadow-2xs"
+                >
+                  {loading ? 'Guardando...' : 'Crear Producto'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* MODAL: Editar producto */}
+      {/* MODAL: Editar Producto */}
       {editProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 sm:p-6 relative max-h-[90dvh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-bold text-gray-800">Editar Producto</h2>
-              <button onClick={() => setEditProduct(null)}><X size={24} className="text-gray-400 hover:text-gray-800" /></button>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 w-full max-w-md max-h-[90dvh] overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h2 className="text-sm font-bold text-slate-900">Editar Producto</h2>
+              <button onClick={() => setEditProduct(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <form onSubmit={handleEdit} className="space-y-4">
+            <form onSubmit={handleEdit} className="space-y-3.5">
               <input type="hidden" name="id" value={editProduct.id} />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                <input name="name" required defaultValue={editProduct.name} className="w-full border p-2 rounded-lg" />
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Nombre del Producto *
+                </label>
+                <input
+                  name="name"
+                  required
+                  defaultValue={editProduct.name}
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Precio de Venta ($)</label>
-                <input name="price" type="number" min="0" step="100" required defaultValue={Number(editProduct.price)} className="w-full border p-2 rounded-lg" />
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Precio de Venta ($) *
+                </label>
+                <input
+                  name="price"
+                  type="number"
+                  min="0"
+                  step="100"
+                  required
+                  defaultValue={Number(editProduct.price)}
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums font-semibold"
+                />
               </div>
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setEditProduct(null)} className="flex-1 px-4 py-2 border rounded-lg text-gray-600">Cancelar</button>
-                <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-60">
+              <div className="flex gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditProduct(null)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 disabled:opacity-60 transition shadow-2xs"
+                >
                   {loading ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
               </div>

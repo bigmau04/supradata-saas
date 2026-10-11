@@ -12,11 +12,8 @@ export default async function PlansPage() {
   const plans = await getPlansAdmin();
 
   return (
-    <div className="p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Gestión de Planes</h1>
-        <PlansClient initialPlans={plans} />
-      </div>
+    <div className="w-full">
+      <PlansClient initialPlans={plans} />
     </div>
   );
 }
