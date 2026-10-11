@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { createMember, renewMemberPlan } from '@/app/actions/members';
+import { CameraModal } from '@/components/CameraModal';
 import {
   Search,
   Plus,
@@ -17,6 +18,7 @@ import {
   QrCode,
   UserPlus,
   Send,
+  Camera,
 } from 'lucide-react';
 
 function Toast({
@@ -66,6 +68,8 @@ export function MembersClient({
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'healthy' | 'risk' | 'critical' | 'inactive'>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createPhotoUrl, setCreatePhotoUrl] = useState<string | null>(null);
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [renewMember, setRenewMember] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -129,11 +133,15 @@ export function MembersClient({
   };
 
   async function handleCreate(formData: FormData) {
+    if (createPhotoUrl) {
+      formData.append('photoUrl', createPhotoUrl);
+    }
     startTransition(async () => {
       const res = await createMember(formData);
       if (res.success) {
         showToast('Socio creado exitosamente.', 'success');
         setIsCreateModalOpen(false);
+        setCreatePhotoUrl(null);
         window.location.reload();
       } else {
         showToast(res.error, 'error');
@@ -481,6 +489,65 @@ export function MembersClient({
               </button>
             </div>
             <form action={handleCreate} className="space-y-3.5">
+              {/* Foto del Socio con soporte para girar cámara en celular */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-3">
+                <div className="h-14 w-14 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative shadow-2xs">
+                  {createPhotoUrl ? (
+                    <img src={createPhotoUrl} alt="Foto Socio" className="h-full w-full object-cover" />
+                  ) : (
+                    <User className="h-6 w-6 text-slate-300" />
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-semibold text-slate-800">Foto del Socio</p>
+                    {createPhotoUrl ? (
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                        Foto lista
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 font-medium">Opcional</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsCameraModalOpen(true)}
+                      className="inline-flex items-center gap-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium px-2 py-1 rounded-md transition shadow-2xs active:scale-95"
+                    >
+                      <Camera className="h-3 w-3 text-emerald-600" />
+                      {createPhotoUrl ? 'Cambiar Foto' : 'Usar Cámara'}
+                    </button>
+                    <label className="inline-flex items-center gap-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium px-2 py-1 rounded-md transition cursor-pointer shadow-2xs">
+                      Subir
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => setCreatePhotoUrl(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                    {createPhotoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setCreatePhotoUrl(null)}
+                        className="text-rose-600 hover:text-rose-700 text-[11px] font-medium px-1.5 py-1 rounded hover:bg-rose-50 transition"
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
                   Nombre Completo *
@@ -555,6 +622,18 @@ export function MembersClient({
           </div>
         </div>
       )}
+
+      <CameraModal
+        isOpen={isCameraModalOpen}
+        onClose={() => setIsCameraModalOpen(false)}
+        onCapture={(dataUrl) => {
+          setCreatePhotoUrl(dataUrl);
+          showToast('Foto capturada correctamente', 'success');
+        }}
+        title="Foto del Nuevo Socio"
+        subtitle="Enfoca el rostro del cliente para su carnet digital"
+        initialFacingMode="environment"
+      />
 
       {/* MODAL: Renovar / Cobrar Plan */}
       {renewMember && (

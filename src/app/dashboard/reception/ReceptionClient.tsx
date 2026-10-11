@@ -7,6 +7,7 @@ import { registerQuickPass } from '@/app/actions/quickPass';
 import { sellProduct } from '@/app/actions/products';
 import { openShift, closeShift, registerMinorExpense } from '@/app/actions/cash_shifts';
 import { registerWalkInMember } from '@/app/actions/members';
+import { CameraModal } from '@/components/CameraModal';
 import {
   User,
   QrCode,
@@ -103,9 +104,7 @@ export function ReceptionClient({
 
   // Walk-in form photo state
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [cameraActive, setCameraActive] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -174,54 +173,6 @@ export function ReceptionClient({
     }
   };
 
-  // Camera handlers for walk-in member
-  const startCamera = async () => {
-    try {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const currentStream = videoRef.current.srcObject as MediaStream;
-        currentStream.getTracks().forEach((track) => track.stop());
-      }
-      setCameraActive(true);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'user' }, width: 640, height: 640 },
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-    } catch (err) {
-      console.error('Error starting camera', err);
-      alert('No se pudo acceder a la cámara. Asegúrate de dar permisos en el navegador.');
-      setCameraActive(false);
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach((track) => track.stop());
-    }
-    setCameraActive(false);
-  };
-
-  const takePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const size = Math.min(video.videoWidth, video.videoHeight);
-      const startX = (video.videoWidth - size) / 2;
-      const startY = (video.videoHeight - size) / 2;
-      canvas.width = 600;
-      canvas.height = 600;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, startX, startY, size, size, 0, 0, 600, 600);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        setPhotoUrl(dataUrl);
-        stopCamera();
-      }
-    }
-  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -686,66 +637,76 @@ export function ReceptionClient({
                   </div>
                 </div>
 
-                {/* Cámara Antifraude Compacta */}
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center gap-3">
-                  <div className="h-16 w-16 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative">
+                {/* Foto del Socio / Carnet con soporte para girar cámara en celular */}
+                <div className="p-3.5 bg-slate-50/90 rounded-xl border border-slate-200/80 flex items-center gap-3.5">
+                  <div className="h-16 w-16 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative shadow-2xs">
                     {photoUrl ? (
-                      <img src={photoUrl} alt="Foto" className="h-full w-full object-cover" />
-                    ) : cameraActive ? (
-                      <video
-                        ref={videoRef}
-                        className="h-full w-full object-cover"
-                        autoPlay
-                        playsInline
-                        muted
-                      />
+                      <img src={photoUrl} alt="Foto Socio" className="h-full w-full object-cover" />
                     ) : (
-                      <User className="h-6 w-6 text-slate-300" />
+                      <User className="h-7 w-7 text-slate-300" />
                     )}
-                    <canvas ref={canvasRef} className="hidden" />
                   </div>
 
-                  <div className="flex-1 space-y-1">
-                    <p className="text-xs font-semibold text-slate-800">Foto del Socio (Opcional)</p>
-                    {cameraActive ? (
-                      <div className="flex items-center gap-1.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-slate-800">Foto del Socio</p>
+                      {photoUrl ? (
+                        <span className="inline-flex items-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                          Foto lista
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 font-medium">Opcional</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                      {photoUrl ? 'Visible en su carnet QR y control de acceso' : 'Para carnet digital y validación en recepción'}
+                    </p>
+
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsCameraModalOpen(true)}
+                        className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300 text-[11px] font-semibold px-2.5 py-1 rounded-lg transition shadow-2xs active:scale-95"
+                      >
+                        <Camera className="h-3.5 w-3.5 text-emerald-600" />
+                        {photoUrl ? 'Cambiar Foto' : 'Usar Cámara'}
+                      </button>
+
+                      <label className="inline-flex items-center gap-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300 text-[11px] font-medium px-2.5 py-1 rounded-lg transition cursor-pointer shadow-2xs">
+                        Subir
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileUpload}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {photoUrl && (
                         <button
                           type="button"
-                          onClick={takePhoto}
-                          className="bg-slate-900 text-white text-[11px] font-semibold px-2 py-1 rounded-md hover:bg-slate-800"
+                          onClick={() => setPhotoUrl(null)}
+                          className="text-rose-600 hover:text-rose-700 text-[11px] font-medium px-2 py-1 rounded-md hover:bg-rose-50 transition"
+                          title="Eliminar foto"
                         >
-                          Capturar
+                          Quitar
                         </button>
-                        <button
-                          type="button"
-                          onClick={stopCamera}
-                          className="text-slate-600 text-[11px] px-2 py-1 rounded-md hover:bg-slate-200"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={startCamera}
-                          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium px-2 py-1 rounded-md transition shadow-2xs"
-                        >
-                          Usar Cámara
-                        </button>
-                        <label className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium px-2 py-1 rounded-md transition cursor-pointer shadow-2xs">
-                          Subir
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                <CameraModal
+                  isOpen={isCameraModalOpen}
+                  onClose={() => setIsCameraModalOpen(false)}
+                  onCapture={(dataUrl) => {
+                    setPhotoUrl(dataUrl);
+                    showToast('Foto capturada correctamente', 'success');
+                  }}
+                  title="Captura de Foto del Socio"
+                  subtitle="Enfoca el rostro del cliente para su carnet digital"
+                  initialFacingMode="environment"
+                />
 
                 <div className="space-y-2.5">
                   <div>

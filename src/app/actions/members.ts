@@ -139,6 +139,7 @@ export async function createMember(formData: FormData): Promise<ActionResult> {
     const documentId = (formData.get('documentId') as string)?.trim();
     const phone = (formData.get('phone') as string)?.trim();
     const planId = formData.get('planId') as string;
+    const photoUrl = (formData.get('photoUrl') as string) || null;
 
     if (!fullName) return { success: false, error: 'El nombre completo es obligatorio.' };
     if (!documentId) return { success: false, error: 'El numero de documento es obligatorio.' };
@@ -152,6 +153,7 @@ export async function createMember(formData: FormData): Promise<ActionResult> {
       documentId,
       phone,
       qrAccessToken,
+      photoUrl,
     }).returning();
 
     if (planId) {
