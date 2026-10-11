@@ -1,34 +1,24 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Camera, SwitchCamera, X, RefreshCw } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export interface CameraModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCapture: (photoDataUrl: string) => void;
-  initialFacingMode?: 'user' | 'environment';
-  title?: string;
-  subtitle?: string;
 }
 
-export function CameraModal({
-  isOpen,
-  onClose,
-  onCapture,
-  initialFacingMode = 'environment',
-  title = 'Foto del Socio',
-  subtitle = 'Enfoca el rostro del cliente para su carnet digital',
-}: CameraModalProps) {
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>(initialFacingMode);
-  const [isLoading, setIsLoading] = useState(false);
+export function CameraModal({ isOpen, onClose, onCapture }: CameraModalProps) {
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const stopCurrentStream = () => {
+  const stopStream = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -41,22 +31,19 @@ export function CameraModal({
   };
 
   const startStream = async (mode: 'user' | 'environment') => {
-    setIsLoading(true);
     setError(null);
-    stopCurrentStream();
+    stopStream();
 
     try {
-      // Usamos ideal para compatibilidad con celulares y laptops sin error overconstrained
-      const constraints: MediaStreamConstraints = {
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: mode },
-          width: { ideal: 1280 },
-          height: { ideal: 1280 },
+          width: { ideal: 720 },
+          height: { ideal: 720 },
         },
         audio: false,
-      };
+      });
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
 
       if (videoRef.current) {
@@ -69,29 +56,28 @@ export function CameraModal({
       }
     } catch (err: any) {
       console.error('[CameraModal] Error accessing camera:', err);
-      setError(
-        'No se pudo acceder a la cámara. Por favor verifica que tu navegador tenga permisos de cámara concedidos.'
-      );
-    } finally {
-      setIsLoading(false);
+      setError('Cámara no disponible. Puedes subir una foto desde tus archivos.');
     }
   };
 
   useEffect(() => {
     if (isOpen) {
+      setCapturedPhoto(null);
       startStream(facingMode);
     } else {
-      stopCurrentStream();
+      stopStream();
+      setCapturedPhoto(null);
     }
 
     return () => {
-      stopCurrentStream();
+      stopStream();
     };
   }, [isOpen]);
 
-  const handleFlipCamera = async () => {
-    const nextMode = facingMode === 'environment' ? 'user' : 'environment';
+  const toggleFacingMode = async () => {
+    const nextMode = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(nextMode);
+    setCapturedPhoto(null);
     await startStream(nextMode);
   };
 
@@ -100,8 +86,8 @@ export function CameraModal({
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    const vWidth = video.videoWidth || 640;
-    const vHeight = video.videoHeight || 640;
+    const vWidth = video.videoWidth || 720;
+    const vHeight = video.videoHeight || 720;
     const size = Math.min(vWidth, vHeight);
     const startX = (vWidth - size) / 2;
     const startY = (vHeight - size) / 2;
@@ -114,8 +100,6 @@ export function CameraModal({
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    // Si la cámara es frontal ('user'), reflejamos horizontalmente
-    // para que la captura guardada sea fiel a la vista tipo espejo
     if (facingMode === 'user') {
       ctx.translate(600, 0);
       ctx.scale(-1, 1);
@@ -124,93 +108,121 @@ export function CameraModal({
     ctx.drawImage(video, startX, startY, size, size, 0, 0, 600, 600);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
 
-    stopCurrentStream();
-    onCapture(dataUrl);
-    onClose();
+    stopStream();
+    setCapturedPhoto(dataUrl);
+  };
+
+  const handleRetry = () => {
+    setCapturedPhoto(null);
+    startStream(facingMode);
+  };
+
+  const handleSaveAndUse = () => {
+    if (capturedPhoto) {
+      onCapture(capturedPhoto);
+      handleClose();
+    }
   };
 
   const handleClose = () => {
-    stopCurrentStream();
+    stopStream();
+    setCapturedPhoto(null);
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-sm sm:max-w-md bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-2xl flex flex-col items-center">
-        {/* Cabecera */}
-        <div className="w-full flex items-center justify-between pb-3.5 mb-3 border-b border-slate-100">
+    <div className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-lg bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl flex flex-col items-center gap-4">
+        {/* Cabecera superior con título e indicador de cámara activa */}
+        <div className="w-full flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                <Camera className="h-4 w-4" />
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">
+                Fotografía del Socio
+              </h3>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {facingMode === 'user' ? 'Cámara Frontal Activa' : 'Cámara Trasera Activa'}
               </span>
-              <h3 className="text-sm font-bold text-slate-900 tracking-tight">{title}</h3>
             </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">{subtitle}</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {capturedPhoto
+                ? 'Verifica que el rostro se aprecie con claridad antes de guardar'
+                : 'Enfoca el rostro del cliente para su carnet digital'}
+            </p>
           </div>
+
           <button
             type="button"
             onClick={handleClose}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
-            aria-label="Cerrar cámara"
+            aria-label="Cerrar modal"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Visor de Video en vivo con encuadre */}
-        <div className="w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden border-2 border-emerald-500/80 relative shadow-inner bg-black flex items-center justify-center">
-          <video
-            ref={(el) => {
-              videoRef.current = el;
-              if (el && streamRef.current && el.srcObject !== streamRef.current) {
-                el.srcObject = streamRef.current;
-                el.play().catch(() => {});
-              }
-            }}
-            autoPlay
-            playsInline
-            muted
-            className={`w-full h-full object-cover transition-transform duration-300 ${
-              facingMode === 'user' ? 'scale-x-[-1]' : 'scale-x-100'
-            }`}
-          />
-
-          {/* Guía visual sutil de encuadre facial */}
-          <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-            <div className="w-44 h-52 sm:w-48 sm:h-56 border-2 border-dashed border-white/60 rounded-[50%] shadow-[0_0_15px_rgba(0,0,0,0.35)] flex items-center justify-center">
-              <span className="text-[10px] tracking-widest uppercase font-semibold text-white/90 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-xs">
-                Rostro aquí
-              </span>
-            </div>
+        {/* Botón selector de cámara (solo texto, sin iconos) */}
+        {!capturedPhoto && (
+          <div className="w-full flex items-center justify-between">
+            <span className="text-xs text-slate-500">¿Usas celular o necesitas otra cámara?</span>
+            <button
+              type="button"
+              onClick={toggleFacingMode}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300 transition-all active:scale-95"
+            >
+              {facingMode === 'user' ? 'Cambiar a Trasera' : 'Cambiar a Frontal'}
+            </button>
           </div>
+        )}
 
-          {/* Badge indicador de modo de cámara */}
-          <div className="absolute top-2.5 left-2.5 z-10">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-black/60 text-white backdrop-blur-xs border border-white/15">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              {facingMode === 'environment' ? 'Cámara Trasera' : 'Cámara Frontal'}
-            </span>
-          </div>
+        {/* Visor grande de video o foto capturada */}
+        <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-2xl overflow-hidden bg-black relative border-2 border-emerald-400 shadow-inner flex items-center justify-center">
+          {capturedPhoto ? (
+            <img
+              src={capturedPhoto}
+              alt="Foto del socio capturada"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <video
+              ref={(el) => {
+                videoRef.current = el;
+                if (el && streamRef.current && el.srcObject !== streamRef.current) {
+                  el.srcObject = streamRef.current;
+                  el.play().catch(() => {});
+                }
+              }}
+              autoPlay
+              playsInline
+              muted
+              className={`w-full h-full object-cover transition-transform duration-300 ${
+                facingMode === 'user' ? 'scale-x-[-1]' : 'scale-x-100'
+              }`}
+            />
+          )}
 
-          {/* Overlay de carga */}
-          {isLoading && (
-            <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center text-white gap-2 z-20">
-              <RefreshCw className="h-6 w-6 animate-spin text-emerald-400" />
-              <span className="text-xs font-medium">Iniciando cámara...</span>
+          {/* Guía visual de encuadre en estado vivo */}
+          {!capturedPhoto && !error && (
+            <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
+              <div className="w-48 h-56 sm:w-52 sm:h-60 border-2 border-dashed border-white/60 rounded-[50%] shadow-[0_0_15px_rgba(0,0,0,0.35)] flex items-center justify-center">
+                <span className="text-[10px] tracking-widest uppercase font-semibold text-white/90 bg-black/40 px-2.5 py-0.5 rounded-full backdrop-blur-xs">
+                  Rostro aquí
+                </span>
+              </div>
             </div>
           )}
 
-          {/* Overlay de error */}
-          {error && !isLoading && (
+          {/* Alerta de error si no hay permisos o no está disponible */}
+          {error && !capturedPhoto && (
             <div className="absolute inset-0 bg-slate-900/95 p-4 flex flex-col items-center justify-center text-center text-white gap-3 z-20">
-              <p className="text-xs text-rose-300 font-medium leading-relaxed">{error}</p>
+              <p className="text-xs text-rose-300 font-medium leading-relaxed max-w-xs">{error}</p>
               <button
                 type="button"
                 onClick={() => startStream(facingMode)}
-                className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 text-xs font-semibold rounded-lg transition border border-white/20"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300 transition-all"
               >
                 Reintentar
               </button>
@@ -221,39 +233,50 @@ export function CameraModal({
         {/* Canvas oculto para procesar el frame */}
         <canvas ref={canvasRef} className="hidden" />
 
-        {/* Botones de acción del visor */}
-        <div className="w-full flex items-center justify-between gap-2.5 mt-5 pt-1">
-          {/* Botón dar vuelta / rotar cámara */}
-          <button
-            type="button"
-            onClick={handleFlipCamera}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition active:scale-95 disabled:opacity-50 shadow-2xs"
-            title="Dar vuelta cámara (trasera / frontal)"
-          >
-            <SwitchCamera className={`h-4 w-4 text-emerald-600 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>Girar Cámara</span>
-          </button>
+        {/* Botonera de acciones: VIVO vs CAPTURADA */}
+        <div className="w-full flex items-center justify-center gap-3 pt-1">
+          {capturedPhoto ? (
+            <>
+              {/* Botón 1: Repetir / Reintentar */}
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold px-4 py-2 rounded-xl transition-all border border-slate-200"
+              >
+                Repetir / Reintentar
+              </button>
 
-          {/* Botón Shutter / Capturar foto */}
-          <button
-            type="button"
-            onClick={handleCapture}
-            disabled={isLoading || !!error}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/25 transition active:scale-95 disabled:opacity-50"
-          >
-            <Camera className="h-4 w-4" />
-            Tomar Foto
-          </button>
+              {/* Botón 2: Guardar y Usar Foto */}
+              <button
+                type="button"
+                onClick={handleSaveAndUse}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-5 py-2 rounded-xl shadow-md transition-all active:scale-95"
+              >
+                Guardar y Usar Foto
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Botón Secundario: Cancelar */}
+              <button
+                type="button"
+                onClick={handleClose}
+                className="text-slate-600 hover:text-slate-900 text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-slate-100 transition-all"
+              >
+                Cancelar
+              </button>
 
-          {/* Botón Cancelar */}
-          <button
-            type="button"
-            onClick={handleClose}
-            className="px-3 py-2.5 rounded-xl text-slate-500 hover:text-slate-700 text-xs font-medium hover:bg-slate-100 transition"
-          >
-            Cancelar
-          </button>
+              {/* Botón Primario: Capturar Foto */}
+              <button
+                type="button"
+                onClick={handleCapture}
+                disabled={!!error}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50"
+              >
+                Capturar Foto
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

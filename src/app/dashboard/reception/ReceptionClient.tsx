@@ -637,7 +637,7 @@ export function ReceptionClient({
                   </div>
                 </div>
 
-                {/* Foto del Socio / Carnet con soporte para girar cámara en celular */}
+                {/* Foto del Socio (Opcional) */}
                 <div className="p-3.5 bg-slate-50/90 rounded-xl border border-slate-200/80 flex items-center gap-3.5">
                   <div className="h-16 w-16 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative shadow-2xs">
                     {photoUrl ? (
@@ -649,48 +649,54 @@ export function ReceptionClient({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-bold text-slate-800">Foto del Socio</p>
-                      {photoUrl ? (
+                      <p className="text-xs font-bold text-slate-800">Foto del Socio (Opcional)</p>
+                      {photoUrl && (
                         <span className="inline-flex items-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                           Foto lista
                         </span>
-                      ) : (
-                        <span className="text-[10px] text-slate-400 font-medium">Opcional</span>
                       )}
                     </div>
                     <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                      {photoUrl ? 'Visible en su carnet QR y control de acceso' : 'Para carnet digital y validación en recepción'}
+                      {photoUrl ? 'Visible en su carnet digital QR y acceso' : 'Para carnet digital y validación en recepción'}
                     </p>
 
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <button
-                        type="button"
-                        onClick={() => setIsCameraModalOpen(true)}
-                        className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300 text-[11px] font-semibold px-2.5 py-1 rounded-lg transition shadow-2xs active:scale-95"
-                      >
-                        <Camera className="h-3.5 w-3.5 text-emerald-600" />
-                        {photoUrl ? 'Cambiar Foto' : 'Usar Cámara'}
-                      </button>
-
-                      <label className="inline-flex items-center gap-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300 text-[11px] font-medium px-2.5 py-1 rounded-lg transition cursor-pointer shadow-2xs">
-                        Subir
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileUpload}
-                          className="hidden"
-                        />
-                      </label>
-
-                      {photoUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setPhotoUrl(null)}
-                          className="text-rose-600 hover:text-rose-700 text-[11px] font-medium px-2 py-1 rounded-md hover:bg-rose-50 transition"
-                          title="Eliminar foto"
-                        >
-                          Quitar
-                        </button>
+                    <div className="flex items-center gap-2 mt-2">
+                      {!photoUrl ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setIsCameraModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow-2xs active:scale-95"
+                          >
+                            Tomar Foto
+                          </button>
+                          <label className="inline-flex items-center gap-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-medium px-2.5 py-1.5 rounded-lg transition cursor-pointer shadow-2xs">
+                            Subir Archivo
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setIsCameraModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition shadow-2xs active:scale-95"
+                          >
+                            Cambiar Foto
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPhotoUrl(null)}
+                            className="text-rose-600 hover:text-rose-700 text-xs font-medium px-2 py-1.5 rounded-lg hover:bg-rose-50 transition"
+                          >
+                            Eliminar
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -703,9 +709,6 @@ export function ReceptionClient({
                     setPhotoUrl(dataUrl);
                     showToast('Foto capturada correctamente', 'success');
                   }}
-                  title="Captura de Foto del Socio"
-                  subtitle="Enfoca el rostro del cliente para su carnet digital"
-                  initialFacingMode="environment"
                 />
 
                 <div className="space-y-2.5">

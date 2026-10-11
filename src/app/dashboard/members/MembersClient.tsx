@@ -489,60 +489,73 @@ export function MembersClient({
               </button>
             </div>
             <form action={handleCreate} className="space-y-3.5">
-              {/* Foto del Socio con soporte para girar cámara en celular */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-3">
-                <div className="h-14 w-14 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative shadow-2xs">
+              {/* Foto del Socio (Opcional) */}
+              <div className="p-3.5 bg-slate-50/90 rounded-xl border border-slate-200/80 flex items-center gap-3.5">
+                <div className="h-16 w-16 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative shadow-2xs">
                   {createPhotoUrl ? (
                     <img src={createPhotoUrl} alt="Foto Socio" className="h-full w-full object-cover" />
                   ) : (
-                    <User className="h-6 w-6 text-slate-300" />
+                    <User className="h-7 w-7 text-slate-300" />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-xs font-semibold text-slate-800">Foto del Socio</p>
-                    {createPhotoUrl ? (
-                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                    <p className="text-xs font-bold text-slate-800">Foto del Socio (Opcional)</p>
+                    {createPhotoUrl && (
+                      <span className="inline-flex items-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                         Foto lista
                       </span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-medium">Opcional</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setIsCameraModalOpen(true)}
-                      className="inline-flex items-center gap-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium px-2 py-1 rounded-md transition shadow-2xs active:scale-95"
-                    >
-                      <Camera className="h-3 w-3 text-emerald-600" />
-                      {createPhotoUrl ? 'Cambiar Foto' : 'Usar Cámara'}
-                    </button>
-                    <label className="inline-flex items-center gap-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium px-2 py-1 rounded-md transition cursor-pointer shadow-2xs">
-                      Subir
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => setCreatePhotoUrl(ev.target?.result as string);
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                        className="hidden"
-                      />
-                    </label>
-                    {createPhotoUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setCreatePhotoUrl(null)}
-                        className="text-rose-600 hover:text-rose-700 text-[11px] font-medium px-1.5 py-1 rounded hover:bg-rose-50 transition"
-                      >
-                        Quitar
-                      </button>
+                  <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                    {createPhotoUrl ? 'Visible en su carnet digital QR y acceso' : 'Para carnet digital y validación en recepción'}
+                  </p>
+
+                  <div className="flex items-center gap-2 mt-2">
+                    {!createPhotoUrl ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setIsCameraModalOpen(true)}
+                          className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow-2xs active:scale-95"
+                        >
+                          Tomar Foto
+                        </button>
+                        <label className="inline-flex items-center gap-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-medium px-2.5 py-1.5 rounded-lg transition cursor-pointer shadow-2xs">
+                          Subir Archivo
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setCreatePhotoUrl(ev.target?.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setIsCameraModalOpen(true)}
+                          className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition shadow-2xs active:scale-95"
+                        >
+                          Cambiar Foto
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCreatePhotoUrl(null)}
+                          className="text-rose-600 hover:text-rose-700 text-xs font-medium px-2 py-1.5 rounded-lg hover:bg-rose-50 transition"
+                        >
+                          Eliminar
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -630,9 +643,6 @@ export function MembersClient({
           setCreatePhotoUrl(dataUrl);
           showToast('Foto capturada correctamente', 'success');
         }}
-        title="Foto del Nuevo Socio"
-        subtitle="Enfoca el rostro del cliente para su carnet digital"
-        initialFacingMode="environment"
       />
 
       {/* MODAL: Renovar / Cobrar Plan */}
