@@ -421,49 +421,114 @@ function TechnicalVerticals() {
   );
 }
 
-function TechnicalSpecs() {
-  const specs = [
-    { param: 'Arquitectura de Sistema', detail: 'Next.js App Router (Server-First), React 19, TypeScript estricto' },
-    { param: 'Persistencia de Datos', detail: 'PostgreSQL administrado con Drizzle ORM, índices btree y transacciones ACID' },
-    { param: 'Mecanismo de Autenticación', detail: 'Sesiones stateless cifradas mediante JOSE (JWT HS256) con cookies httpOnly' },
-    { param: 'Auditoría de Turnos', detail: 'Apertura con base forzosa, registro de egresos menores y arqueo ciego final' },
-    { param: 'Identificación Digital', detail: 'Token criptográfico único con renderizado QR SVG sin dependencias de app nativa' },
-    { param: 'Soporte de Conectividad', detail: 'Optimizado para lectores de código de barras USB HID y cámaras web estándar' },
-    { param: 'Tasa de Disponibilidad (SLA)', detail: '99.9% de uptime garantizado para operaciones continuas de mostrador' },
-  ];
-
+function AdvantagesGrid() {
   return (
     <section id="especificaciones" className="scroll-mt-16 border-t border-slate-100 bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl mb-10">
-          <p className="text-[10px] tracking-widest uppercase font-semibold text-slate-400 font-mono block mb-2">
-            ESPECIFICACIONES TÉCNICAS DE PRODUCCIÓN
-          </p>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-            Ficha de Infraestructura y Estándares
+        {/* Encabezado centrado */}
+        <div className="text-center mb-12">
+          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/70 text-[10px] font-mono tracking-widest px-3 py-1 rounded-full uppercase mx-auto block w-fit mb-3">
+            [ GARANTÍAS DE OPERACIÓN EN PRODUCCIÓN ]
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 text-center">
+            Ventajas Técnicas y Garantías Operativas
           </h2>
-          <p className="mt-2 text-xs sm:text-sm text-slate-600">
-            Parámetros de diseño del software para despliegue en producción.
+          <p className="text-sm text-slate-500 text-center max-w-xl mx-auto mt-2">
+            Arquitectura diseñada para blindar el flujo de caja y mantener tu mostrador cobrando sin interrupciones.
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/75 border-b border-slate-100 text-[10px] font-mono text-slate-400 uppercase tracking-wider">
-              <tr>
-                <th className="py-3 px-5 w-1/3">Parámetro Técnico</th>
-                <th className="py-3 px-5">Implementación en Producción</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-mono">
-              {specs.map((s, idx) => (
-                <tr key={idx} className="hover:bg-emerald-50/20 transition-colors">
-                  <td className="py-3 px-5 font-semibold text-slate-900">{s.param}</td>
-                  <td className="py-3 px-5 text-slate-600">{s.detail}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Bento Grid 3x2 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {/* Tarjeta 1 — Azul Cobalto Suave */}
+          <div className="bg-gradient-to-br from-white to-blue-50/25 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 transition-all hover:shadow-lg hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_8px_30px_rgba(219,234,254,0.35)] flex flex-col justify-between">
+            <div>
+              <span className="bg-blue-50 text-blue-700 border border-blue-200/60 text-[10px] font-mono px-2.5 py-0.5 rounded-full w-fit block">
+                [ LATENCIA &lt; 200MS ]
+              </span>
+              <h3 className="text-base font-bold text-slate-900 mt-4 mb-2">
+                Velocidad Extrema en Mostrador
+              </h3>
+              <p className="text-xs leading-relaxed text-slate-600">
+                Carga instantánea de cobros y validaciones. La fila de clientes nunca se congestiona en horas pico.
+              </p>
+            </div>
+          </div>
+
+          {/* Tarjeta 2 — Verde Esmeralda Dinero */}
+          <div className="bg-gradient-to-br from-white to-emerald-50/25 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 transition-all hover:shadow-lg hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_8px_30px_rgba(209,250,229,0.35)] flex flex-col justify-between">
+            <div>
+              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[10px] font-mono px-2.5 py-0.5 rounded-full w-fit block">
+                [ INTEGRIDAD CONTABLE 100% ]
+              </span>
+              <h3 className="text-base font-bold text-slate-900 mt-4 mb-2">
+                Cero Fugas ni Descuadres de Caja
+              </h3>
+              <p className="text-xs leading-relaxed text-slate-600">
+                Registro inmutable de cada peso. La conciliación entre efectivo recibido y transferencias es matemática y exacta.
+              </p>
+            </div>
+          </div>
+
+          {/* Tarjeta 3 — Verde Esmeralda Auditoría */}
+          <div className="bg-gradient-to-br from-white to-emerald-50/15 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 transition-all hover:shadow-lg hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_8px_30px_rgba(209,250,229,0.35)] flex flex-col justify-between">
+            <div>
+              <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/60 text-[10px] font-mono px-2.5 py-0.5 rounded-full w-fit block">
+                [ AUDITORÍA ACTIVA ]
+              </span>
+              <h3 className="text-base font-bold text-slate-900 mt-4 mb-2">
+                Arqueo Ciego Antifraude
+              </h3>
+              <p className="text-xs leading-relaxed text-slate-600">
+                El cajero declara el efectivo real sin conocer el saldo calculado por el sistema, detectando cualquier discrepancia de inmediato.
+              </p>
+            </div>
+          </div>
+
+          {/* Tarjeta 4 — Azul Cielo Conectividad */}
+          <div className="bg-gradient-to-br from-white to-blue-50/20 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 transition-all hover:shadow-lg hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_8px_30px_rgba(219,234,254,0.35)] flex flex-col justify-between">
+            <div>
+              <span className="bg-blue-50 text-blue-700 border border-blue-200/60 text-[10px] font-mono px-2.5 py-0.5 rounded-full w-fit block">
+                [ HARDWARE UNIVERSAL ]
+              </span>
+              <h3 className="text-base font-bold text-slate-900 mt-4 mb-2">
+                Cero Inversión en Nuevos Dispositivos
+              </h3>
+              <p className="text-xs leading-relaxed text-slate-600">
+                Funciona de inmediato con cualquier tablet, computador, lector de barras USB o cámara web convencional que ya tengas.
+              </p>
+            </div>
+          </div>
+
+          {/* Tarjeta 5 — Azul Cobalto Cloud */}
+          <div className="bg-gradient-to-br from-white to-blue-50/25 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 transition-all hover:shadow-lg hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_8px_30px_rgba(219,234,254,0.35)] flex flex-col justify-between">
+            <div>
+              <span className="bg-blue-50 text-blue-700 border border-blue-200/60 text-[10px] font-mono px-2.5 py-0.5 rounded-full w-fit block">
+                [ ALTA DISPONIBILIDAD 99.9% ]
+              </span>
+              <h3 className="text-base font-bold text-slate-900 mt-4 mb-2">
+                Operación Continua en la Nube
+              </h3>
+              <p className="text-xs leading-relaxed text-slate-600">
+                Accede a tus reportes y cuadres desde tu teléfono en tiempo real. Respaldo continuo sin riesgo de servidores locales.
+              </p>
+            </div>
+          </div>
+
+          {/* Tarjeta 6 — Gris y Verde Acento */}
+          <div className="bg-gradient-to-br from-white to-slate-50 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300 flex flex-col justify-between">
+            <div>
+              <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[10px] font-mono px-2.5 py-0.5 rounded-full w-fit block">
+                [ ACCESO INMEDIATO ]
+              </span>
+              <h3 className="text-base font-bold text-slate-900 mt-4 mb-2">
+                Sin Curva de Aprendizaje
+              </h3>
+              <p className="text-xs leading-relaxed text-slate-600">
+                Interfaz intuitiva y depurada. Cualquier nuevo recepcionista aprende a registrar accesos y cobrar turnos en menos de 5 minutos.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -571,7 +636,7 @@ export default function Home() {
         <Hero />
         <BentoGrid />
         <TechnicalVerticals />
-        <TechnicalSpecs />
+        <AdvantagesGrid />
         <FinalCallToAction />
       </main>
       <Footer />
