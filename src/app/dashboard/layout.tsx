@@ -3,6 +3,7 @@ import { Dumbbell, LogOut } from 'lucide-react';
 import { deleteSession, verifySession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import DashboardMobileNav from './DashboardMobileNav';
+import OnboardingBanner from './OnboardingBanner';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const auth = await verifySession();
@@ -65,6 +66,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
         <DashboardMobileNav items={mobileItems} />
       </nav>
+      <OnboardingBanner />
       <main>
         {children}
       </main>

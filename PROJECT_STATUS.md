@@ -66,3 +66,8 @@ Aislamiento Multi-tenant estricto mediante `gym_id` en todas las consultas de le
 ### Fase 4: Inteligencia y Automatización (Futuro)
 - *Gym Health Score* unificado (Retención, Finanzas, Asistencia).
 - Automatización programada desatendida de recordatorios de cobro vía WhatsApp API.
+
+## 5. Scripts de Desarrollo y Mantenimiento
+Para facilitar el entorno de pruebas locales y la población de la base de datos de test, se incluyen varios scripts:
+- `seed_3months_data.ts` y `seed_finance_test_data.ts`: Generan membresías, cobros, gastos y turnos de caja ficticios (ej. nombres como "Socio 3M...") para pruebas de estrés y validación de reportes.
+- `clean_test_data.ts`: Limpia en cascada todos los datos de prueba autogenerados (miembros, asistencias, pagos y suscripciones de prueba), manteniendo intactos los datos productivos.

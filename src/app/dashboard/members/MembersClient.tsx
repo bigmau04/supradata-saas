@@ -1,7 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { createMember, renewMemberPlan } from '@/app/actions/members';
-import { Search, Plus, MessageCircle, User, AlertTriangle, XOctagon, CheckCircle2, DollarSign, RefreshCw, X, CheckCircle, QrCode } from 'lucide-react';
+import { Search, Plus, MessageCircle, User, AlertTriangle, XOctagon, CheckCircle2, DollarSign, RefreshCw, X, CheckCircle, QrCode, UserPlus } from 'lucide-react';
 
 // ─── Toast component ──────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
@@ -229,7 +229,44 @@ export function MembersClient({ initialMembers, plans, coaches = [] }: { initial
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={6} className="text-center py-8 text-gray-500">No se encontraron miembros</td></tr>
+              <tr>
+                <td colSpan={6} className="py-12 px-4 text-center">
+                  <div className="max-w-sm mx-auto flex flex-col items-center justify-center">
+                    <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-blue-100">
+                      <UserPlus className="h-8 w-8" />
+                    </div>
+                    {members.length === 0 ? (
+                      <>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Aún no tienes socios registrados</h3>
+                        <p className="text-sm text-gray-500 mb-6 text-center">
+                          Registra a tu primer cliente para emitir su carnet QR digital y controlar su acceso.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setIsCreateModalOpen(true)}
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all active:scale-95 text-sm"
+                        >
+                          <Plus className="h-4 w-4" /> Registrar Primer Socio
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">No se encontraron socios</h3>
+                        <p className="text-sm text-gray-500 mb-5 text-center">
+                          No hay socios que coincidan con el filtro o término de búsqueda aplicado.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => { setSearch(''); setFilter('all'); }}
+                          className="text-sm font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-xl transition"
+                        >
+                          Restablecer filtros
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </td>
+              </tr>
             )}
           </tbody>
         </table></div>

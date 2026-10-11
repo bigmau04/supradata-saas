@@ -185,7 +185,13 @@ export function ReceptionClient({ coaches = [], products = [], plans = [], activ
                   ))}
                   {(!activeShift.transactions || activeShift.transactions.length === 0) && (
                     <tr>
-                      <td colSpan={4} className="text-center py-6 text-gray-500">Aún no hay movimientos en este turno.</td>
+                      <td colSpan={4} className="py-8 text-center">
+                        <div className="flex flex-col items-center justify-center text-gray-400">
+                          <Wallet className="h-8 w-8 mb-2 text-gray-300" />
+                          <p className="font-semibold text-gray-700 text-sm">Aún no hay movimientos en este turno</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Los cobros de pases diarios, socios y ventas de tienda se registrarán aquí.</p>
+                        </div>
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -263,7 +269,7 @@ export function ReceptionClient({ coaches = [], products = [], plans = [], activ
                    value={inputValue}
                    onChange={(e) => setInputValue(e.target.value)}
                    placeholder="Pistola USB / Digitar cédula..."
-                   className="w-full pl-14 pr-28 py-4 text-xl border-2 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition shadow-sm bg-gray-50 focus:bg-white"
+                   className="w-full pl-14 pr-28 py-4 text-xl rounded-2xl text-slate-900 font-semibold placeholder:text-slate-400 bg-white [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset] [&:-webkit-autofill]:text-fill-slate-900 border border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition shadow-sm"
                    disabled={!activeShift && userRole !== 'owner'}
                  />
                  <button 
@@ -281,20 +287,80 @@ export function ReceptionClient({ coaches = [], products = [], plans = [], activ
                   <div className="h-px bg-gray-200 flex-1"></div>
                </div>
 
-               <button disabled={!activeShift && userRole !== 'owner'} onClick={() => setShowWalkInRegister(true)} className="flex items-center justify-center gap-3 w-full max-w-md bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-50 transition-all shadow-md">
-                 👤 + Registrar Nuevo Socio
+               <button 
+                 disabled={!activeShift && userRole !== 'owner'} 
+                 onClick={() => setShowWalkInRegister(true)} 
+                 title="Inscribir socio nuevo y asignarle un plan comercial"
+                 className="group flex flex-col w-full max-w-md bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white p-4 rounded-2xl font-bold disabled:opacity-50 transition-all shadow-md active:scale-[0.99] text-left"
+               >
+                 <div className="flex items-center justify-between w-full">
+                   <span className="flex items-center gap-2 text-base sm:text-lg">
+                     <User className="h-5 w-5" /> Registrar Nuevo Socio
+                   </span>
+                   <span className="text-[11px] font-bold uppercase tracking-wider bg-white/20 text-white px-2.5 py-0.5 rounded-full backdrop-blur-sm">
+                     Membresía
+                   </span>
+                 </div>
+                 <span className="text-xs text-indigo-100 font-normal mt-1">
+                   Crea la ficha del cliente, asigna plan y genera su carnet QR digital
+                 </span>
                </button>
 
-               <button disabled={!activeShift && userRole !== 'owner'} onClick={() => setScannerOpen(true)} className="flex items-center justify-center gap-3 w-full max-w-md bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-50 transition-all">
-                 <QrCode size={28} /> 📷 Activar Cámara / Escáner QR
+               <button 
+                 disabled={!activeShift && userRole !== 'owner'} 
+                 onClick={() => setScannerOpen(true)} 
+                 title="Escanear código QR del carnet digital con la cámara"
+                 className="group flex flex-col w-full max-w-md bg-gray-900 hover:bg-gray-800 text-white p-4 rounded-2xl font-bold disabled:opacity-50 transition-all shadow-md active:scale-[0.99] text-left"
+               >
+                 <div className="flex items-center justify-between w-full">
+                   <span className="flex items-center gap-2 text-base sm:text-lg">
+                     <QrCode className="h-5 w-5 text-emerald-400" /> Activar Cámara / Escáner QR
+                   </span>
+                   <span className="text-[11px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+                     Automático
+                   </span>
+                 </div>
+                 <span className="text-xs text-gray-300 font-normal mt-1">
+                   Valida ingresos leyendo el carnet QR en el celular del socio
+                 </span>
                </button>
 
-               <button disabled={!activeShift && userRole !== 'owner'} onClick={() => setShowQuickPass(true)} className="flex items-center justify-center gap-3 w-full max-w-md bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-50 transition-all">
-                 <DollarSign size={28} /> + Cobrar Día / Visita Exprés
+               <button 
+                 disabled={!activeShift && userRole !== 'owner'} 
+                 onClick={() => setShowQuickPass(true)} 
+                 title="Cobro rápido de visita de 1 día para visitantes no inscritos"
+                 className="group flex flex-col w-full max-w-md bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-2xl font-bold disabled:opacity-50 transition-all shadow-md active:scale-[0.99] text-left"
+               >
+                 <div className="flex items-center justify-between w-full">
+                   <span className="flex items-center gap-2 text-base sm:text-lg">
+                     <DollarSign className="h-5 w-5 text-amber-300" /> Cobrar Día / Visita Exprés
+                   </span>
+                   <span className="text-[11px] font-bold uppercase tracking-wider bg-white/20 text-amber-200 px-2.5 py-0.5 rounded-full">
+                     Sin Registro
+                   </span>
+                 </div>
+                 <span className="text-xs text-emerald-100 font-normal mt-1">
+                   Cobro inmediato de 1 día para visitantes sin papeleo
+                 </span>
                </button>
 
-               <button disabled={!activeShift && userRole !== 'owner'} onClick={() => setShowStore(true)} className="flex items-center justify-center gap-3 w-full max-w-md bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-50 transition-all">
-                 <ShoppingCart size={28} /> 🛒 Tienda / Venta de Mostrador
+               <button 
+                 disabled={!activeShift && userRole !== 'owner'} 
+                 onClick={() => setShowStore(true)} 
+                 title="Venta de bebidas, aguas, suplementos o snacks en el mostrador"
+                 className="group flex flex-col w-full max-w-md bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-2xl font-bold disabled:opacity-50 transition-all shadow-md active:scale-[0.99] text-left"
+               >
+                 <div className="flex items-center justify-between w-full">
+                   <span className="flex items-center gap-2 text-base sm:text-lg">
+                     <ShoppingCart className="h-5 w-5 text-purple-200" /> Tienda / Venta de Mostrador
+                   </span>
+                   <span className="text-[11px] font-bold uppercase tracking-wider bg-white/20 text-purple-200 px-2.5 py-0.5 rounded-full">
+                     Inventario
+                   </span>
+                 </div>
+                 <span className="text-xs text-purple-100 font-normal mt-1">
+                   Venta directa de bebidas energéticas, agua, barritas o toallas
+                 </span>
                </button>
                
                {!activeShift && userRole !== 'owner' && <div className="text-red-500 font-bold mt-2 animate-pulse">¡Debes Abrir Turno para operar!</div>}
