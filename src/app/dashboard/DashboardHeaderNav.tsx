@@ -15,7 +15,7 @@ export function DashboardHeaderNav({ items }: { items: NavItem[] }) {
     href === '/dashboard' ? pathname === href : pathname.startsWith(href);
 
   return (
-    <nav className="hidden md:flex items-center gap-1" aria-label="Navegación principal">
+    <nav className="hidden md:flex items-center gap-0.5" aria-label="Navegación principal">
       {items.map((item) => {
         const active = isActive(item.href);
         return (
@@ -23,10 +23,10 @@ export function DashboardHeaderNav({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+            className={`px-3 py-1.5 text-xs rounded-xl font-medium transition-all duration-200 ${
               active
-                ? 'bg-slate-100 text-slate-900 font-semibold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
+                ? 'bg-blue-50 text-blue-700 border border-blue-200/60 shadow-sm font-semibold'
+                : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50/60 hover:shadow-sm'
             }`}
           >
             {item.label}

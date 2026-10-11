@@ -28,7 +28,7 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-2">
           <Link
             href="/dashboard/reception"
-            className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2 px-3.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
+            className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2 px-3.5 rounded-lg flex items-center gap-1.5 shadow-2xs hover:shadow-[0_4px_20px_rgba(15,23,42,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
           >
             <QrCode className="h-3.5 w-3.5" />
             <span>Abrir Recepción</span>
@@ -42,7 +42,8 @@ export default async function DashboardPage() {
           Facturación y Actividad
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          {/* Recaudo de Hoy — Emerald glow */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_8px_30px_rgba(16,185,129,0.18)] hover:bg-gradient-to-br hover:from-white hover:to-emerald-50/20">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500">Recaudo de Hoy</span>
               <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/60">
@@ -59,7 +60,8 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          {/* Balance del Mes — Blue glow */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:border-blue-300 hover:shadow-[0_8px_30px_rgba(59,130,246,0.18)] hover:bg-gradient-to-br hover:from-white hover:to-blue-50/20">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500">Balance del Mes</span>
               <span className="p-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/60">
@@ -76,7 +78,8 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          {/* Asistencias Hoy — Slate glow */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_8px_25px_rgba(148,163,184,0.15)]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500">Asistencias Hoy</span>
               <span className="p-1.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/60">
@@ -102,7 +105,8 @@ export default async function DashboardPage() {
           Monitoreo en Sala (Tiempo Real)
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          {/* Aforo Actual — Blue glow */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:border-blue-300 hover:shadow-[0_8px_30px_rgba(59,130,246,0.18)] hover:bg-gradient-to-br hover:from-white hover:to-blue-50/20">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500">Aforo Actual</span>
               <span className="bg-blue-50 text-blue-700 border border-blue-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
@@ -117,7 +121,8 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          {/* Socios Activos — Emerald glow */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_8px_30px_rgba(16,185,129,0.18)] hover:bg-gradient-to-br hover:from-white hover:to-emerald-50/20">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500">Socios Activos</span>
               <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
@@ -132,11 +137,12 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+          {/* Próximos a Vencer — Slate glow (alerta) */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_8px_25px_rgba(148,163,184,0.15)]">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-500">Próximos a Vencer</span>
               <span className="bg-amber-50 text-amber-700 border border-amber-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
-                &le; 5 días
+                ≤ 5 días
               </span>
             </div>
             <div className="mt-3">
@@ -157,54 +163,54 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Link
             href="/dashboard/reception"
-            className="group bg-white hover:bg-slate-50/80 p-5 rounded-xl border border-slate-200/80 shadow-xs transition-colors flex flex-col justify-between"
+            className="group bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_8px_30px_rgba(16,185,129,0.18)] hover:bg-gradient-to-br hover:from-white hover:to-emerald-50/20"
           >
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-slate-900">Recepción y Escáner</span>
-                <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-emerald-600 transition-colors duration-200" />
               </div>
               <p className="text-xs text-slate-500 mt-1">
                 Validar accesos por cámara/pistola USB y cobrar turnos de mostrador.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs font-medium text-slate-700">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs font-medium text-slate-700 group-hover:text-emerald-700 transition-colors duration-200">
               <span>Abrir mostrador</span>
             </div>
           </Link>
 
           <Link
             href="/dashboard/finances"
-            className="group bg-white hover:bg-slate-50/80 p-5 rounded-xl border border-slate-200/80 shadow-xs transition-colors flex flex-col justify-between"
+            className="group bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:border-blue-300 hover:shadow-[0_8px_30px_rgba(59,130,246,0.18)] hover:bg-gradient-to-br hover:from-white hover:to-blue-50/20"
           >
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-slate-900">Analítica Financiera</span>
-                <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 transition-colors duration-200" />
               </div>
               <p className="text-xs text-slate-500 mt-1">
                 Reportes de ventas, métodos de pago y recuperación de cartera.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs font-medium text-slate-700">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs font-medium text-slate-700 group-hover:text-blue-700 transition-colors duration-200">
               <span>Ver balances</span>
             </div>
           </Link>
 
           <Link
             href="/dashboard/members"
-            className="group bg-white hover:bg-slate-50/80 p-5 rounded-xl border border-slate-200/80 shadow-xs transition-colors flex flex-col justify-between"
+            className="group bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_8px_25px_rgba(148,163,184,0.15)]"
           >
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-slate-900">Gestión de Miembros</span>
-                <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-slate-900 transition-colors duration-200" />
               </div>
               <p className="text-xs text-slate-500 mt-1">
                 Base de datos de socios, planes asignados y envío de carnets QR por WhatsApp.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs font-medium text-slate-700">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs font-medium text-slate-700 group-hover:text-slate-900 transition-colors duration-200">
               <span>Administrar socios</span>
             </div>
           </Link>
