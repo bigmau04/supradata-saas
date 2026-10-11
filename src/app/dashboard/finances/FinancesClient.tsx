@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getFinancialOverview, getRevenueRecoveryData, getDailyBreakdown } from '@/app/actions/finances';
 import { createPayment, voidPayment, createExpense, openCashShift, closeCashShift } from '@/app/actions/finance';
-import { DollarSign, Wallet, CreditCard, TrendingUp, TrendingDown, MessageCircle, Clock, Ban, PlusCircle } from 'lucide-react';
+import { DollarSign, Wallet, CreditCard, TrendingUp, TrendingDown, MessageCircle, Clock, Ban, PlusCircle, ShieldCheck, Receipt, BarChart3, ArrowRight, Plus } from 'lucide-react';
 
 export function FinancesClient({ operationalData }: { operationalData?: any }) {
   const [timeframe, setTimeframe] = useState<'today' | 'week' | 'month' | 'year'>('month');
@@ -239,7 +239,11 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
                   })()}
                 </div>
               ) : (
-                <div className="h-64 flex items-center justify-center text-gray-400">No hay datos en este periodo.</div>
+                <div className="h-64 flex flex-col items-center justify-center text-center p-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                  <BarChart3 className="h-10 w-10 text-slate-300 mb-2" />
+                  <h4 className="text-sm font-bold text-slate-700">Sin facturación en este período</h4>
+                  <p className="text-xs text-slate-400 mt-1 max-w-xs">Registra cobros de membresías o ventas en caja para visualizar tu curva de ingresos.</p>
+                </div>
               )}
             </div>
 
@@ -264,7 +268,23 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
                   }) || [];
 
                   if (filtered.length === 0) {
-                    return <div className="text-center text-gray-500 text-sm mt-10">Todo al día. No hay socios en riesgo.</div>;
+                    return (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-6 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 my-auto">
+                        <div className="h-12 w-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-3 shadow-xs border border-emerald-100">
+                          <ShieldCheck className="h-6 w-6" />
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-800 mb-1">¡Cartera 100% al día!</h4>
+                        <p className="text-xs text-slate-500 mb-4 max-w-xs leading-relaxed">
+                          No hay socios con membresías vencidas ni cobros pendientes en este filtro. Tu comunidad está activa y al corriente.
+                        </p>
+                        <a
+                          href="/dashboard/members"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-white hover:bg-blue-50 border border-blue-200 px-3.5 py-2 rounded-xl transition shadow-2xs"
+                        >
+                          Ver Directorio de Socios <ArrowRight className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
+                    );
                   }
 
                   return filtered.map((m: any) => (
@@ -418,7 +438,30 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
                    ))}
                    {(!transactions || transactions.length === 0) && (
                      <tr>
-                       <td colSpan={5} className="text-center py-8 text-gray-500">No hay movimientos recientes</td>
+                       <td colSpan={5} className="py-12 px-4 text-center">
+                         <div className="max-w-md mx-auto flex flex-col items-center justify-center">
+                           <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-xs border border-blue-100">
+                             <Receipt className="h-8 w-8" />
+                           </div>
+                           <h3 className="text-base font-bold text-slate-900 mb-1">Sin movimientos de caja registrados</h3>
+                           <p className="text-sm text-slate-500 mb-5 text-center leading-relaxed max-w-sm">
+                             Los cobros de membresías, ventas rápidas y gastos operativos aparecerán aquí en tiempo real con opción de anulación.
+                           </p>
+                           <button
+                             type="button"
+                             onClick={() => {
+                               const selectEl = document.querySelector('select[name="memberId"]') as HTMLSelectElement;
+                               if (selectEl) {
+                                 selectEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                 selectEl.focus();
+                               }
+                             }}
+                             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-xs transition active:scale-95 text-sm"
+                           >
+                             <Plus className="h-4 w-4" /> Registrar Primer Movimiento
+                           </button>
+                         </div>
+                       </td>
                      </tr>
                    )}
                  </tbody>
@@ -465,7 +508,13 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
                   ))}
                   {breakdownData.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-8 text-gray-500">No hay transacciones exitosas este día.</td>
+                      <td colSpan={5} className="py-10 text-center">
+                        <div className="flex flex-col items-center justify-center text-slate-400">
+                          <Receipt className="h-8 w-8 mb-2 text-slate-300" />
+                          <p className="font-semibold text-slate-700 text-sm">No hay transacciones registradas este día</p>
+                          <p className="text-xs text-slate-400 mt-0.5">Selecciona otra fecha en la gráfica de ingresos para ver su detalle.</p>
+                        </div>
+                      </td>
                     </tr>
                   )}
                 </tbody>

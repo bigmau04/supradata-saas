@@ -98,8 +98,29 @@ export function CoachesClient({ initialCoaches }: { initialCoaches: any[] }) {
             ))}
             {filteredCoaches.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-500 font-medium">
-                  {filterActive ? 'No hay entrenadores activos.' : 'No hay entrenadores retirados.'}
+                <td colSpan={7} className="py-12 px-4 text-center">
+                  <div className="max-w-sm mx-auto flex flex-col items-center justify-center">
+                    <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-xs border border-blue-100">
+                      <Users className="h-8 w-8" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">
+                      {filterActive ? 'No hay entrenadores registrados' : 'No hay entrenadores inactivos'}
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-6 text-center leading-relaxed">
+                      {filterActive 
+                        ? 'Registra a tus entrenadores para asignarles socios y habilitar su portal de gestión deportiva.'
+                        : 'Todos los entrenadores se encuentran activos en el sistema.'}
+                    </p>
+                    {filterActive && (
+                      <button
+                        type="button"
+                        onClick={() => setShowModal(true)}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-xs transition active:scale-95 text-sm"
+                      >
+                        <Plus className="h-4 w-4" /> Registrar Entrenador
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             )}

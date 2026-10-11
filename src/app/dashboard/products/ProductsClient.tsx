@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { createProduct, toggleProductStatus, updateProduct } from '@/app/actions/products';
@@ -132,7 +132,26 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
               </tr>
             ))}
             {products.length === 0 && (
-              <tr><td colSpan={4} className="text-center py-8 text-gray-500">No hay productos registrados.</td></tr>
+              <tr>
+                <td colSpan={4} className="py-12 px-4 text-center">
+                  <div className="max-w-sm mx-auto flex flex-col items-center justify-center">
+                    <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-xs border border-blue-100">
+                      <ShoppingCart className="h-8 w-8" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">Aún no tienes productos en inventario</h3>
+                    <p className="text-sm text-gray-500 mb-6 text-center">
+                      Crea productos para venta rápida en recepción (bebidas hidratantes, barras de proteína, suplementos, accesorios).
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateModal(true)}
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-xs transition active:scale-95 text-sm"
+                    >
+                      <Plus className="h-4 w-4" /> Registrar Primer Producto
+                    </button>
+                  </div>
+                </td>
+              </tr>
             )}
           </tbody>
         </table></div>

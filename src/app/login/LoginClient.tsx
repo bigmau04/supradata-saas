@@ -33,7 +33,7 @@ export function LoginClient() {
           type="email" 
           required 
           placeholder="tucorreo@gym.com" 
-          className="w-full rounded-xl p-3 text-slate-900 font-medium placeholder:text-slate-400 bg-white [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset] [&:-webkit-autofill]:text-fill-slate-900 border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
+          className="w-full rounded-xl p-3 text-slate-900 font-medium placeholder:text-slate-400 bg-white [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset] [&:-webkit-autofill]:text-fill-slate-900 [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
         />
       </div>
       <div>
@@ -44,7 +44,7 @@ export function LoginClient() {
             type={showPassword ? 'text' : 'password'} 
             required 
             placeholder="••••••••"
-            className="w-full rounded-xl p-3 pr-11 text-slate-900 font-medium placeholder:text-slate-400 bg-white [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset] [&:-webkit-autofill]:text-fill-slate-900 border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
+            className="w-full rounded-xl p-3 pr-11 text-slate-900 font-medium placeholder:text-slate-400 bg-white [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset] [&:-webkit-autofill]:text-fill-slate-900 [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
           />
           <button
             type="button"
