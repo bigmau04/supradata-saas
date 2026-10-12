@@ -1,6 +1,7 @@
 import { getDashboardMetrics, getGymLiveMetrics } from '@/app/actions/dashboard';
 import { DollarSign, Activity, TrendingUp, Users, ArrowUpRight, ShieldCheck, QrCode } from 'lucide-react';
 import Link from 'next/link';
+import { DashboardSubtitle } from './DashboardSubtitle';
 
 export default async function DashboardPage() {
   const metrics = await getDashboardMetrics();
@@ -21,9 +22,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">Panel Gerencial</h1>
-          <p className="text-xs text-slate-500">
-            Resumen consolidado de operaciones, recaudos de caja y aforo en sala
-          </p>
+          <DashboardSubtitle />
         </div>
         <div className="flex items-center gap-2">
           <Link
