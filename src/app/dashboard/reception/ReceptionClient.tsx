@@ -290,40 +290,44 @@ export function ReceptionClient({
           )}
 
           {activeShift ? (
-            <div className="inline-flex items-center gap-2 pl-2.5 pr-1.5 py-1 rounded-md bg-slate-900 text-white text-xs shadow-2xs">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-medium text-slate-200">
-                Caja: ${activeShift.expectedCash.toLocaleString('es-CO')}
-              </span>
-              <div className="flex items-center gap-1 border-l border-slate-700 pl-1.5">
-                <button
-                  onClick={() => setShowExpense(true)}
-                  className="px-1.5 py-0.5 rounded text-[10px] font-semibold text-rose-300 hover:text-white hover:bg-slate-800 transition"
-                  title="Registrar gasto menor"
-                >
-                  - Gasto
-                </button>
-                <button
-                  onClick={() => setShowCloseShift(true)}
-                  className="px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition"
-                  title="Arqueo y cierre de turno"
-                >
-                  Cerrar Turno
-                </button>
+            <div className="flex items-center flex-wrap gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs shadow-2xs font-medium">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-slate-300 text-[11px] uppercase tracking-wider font-semibold">Caja Mostrador:</span>
+                <span className="text-white font-bold tabular-nums">
+                  ${activeShift.expectedCash.toLocaleString('es-CO')}
+                </span>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setShowExpense(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-semibold shadow-2xs transition"
+                title="Registrar salida o gasto menor de caja"
+              >
+                <MinusCircle className="h-3.5 w-3.5 text-rose-600" />
+                <span>Registrar Gasto</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowCloseShift(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 hover:text-slate-900 text-xs font-semibold shadow-2xs transition"
+                title="Arqueo y cierre de turno"
+              >
+                <Lock className="h-3.5 w-3.5 text-slate-600" />
+                <span>Cerrar Turno (Arqueo)</span>
+              </button>
             </div>
-          ) : userRole === 'owner' ? (
+          ) : (
             <button
+              type="button"
               onClick={() => setShowOpenShift(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold shadow-2xs transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold shadow-2xs transition"
             >
               <Wallet className="h-3.5 w-3.5 text-slate-300" />
-              Abrir Turno de Caja
+              <span>Abrir Turno de Caja</span>
             </button>
-          ) : (
-            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
-              <AlertTriangle className="h-3.5 w-3.5" /> Turno no iniciado
-            </div>
           )}
         </div>
       </div>
@@ -998,14 +1002,12 @@ export function ReceptionClient({
       {showOpenShift && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 max-w-sm w-full relative animate-in fade-in zoom-in-95 duration-100">
-            {userRole === 'owner' && (
-              <button
-                onClick={() => setShowOpenShift(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+            <button
+              onClick={() => setShowOpenShift(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
             <div className="flex items-center gap-2 mb-4">
               <div className="p-2 rounded-lg bg-slate-100 text-slate-900">
                 <Wallet className="h-4 w-4" />

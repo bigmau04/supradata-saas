@@ -2,22 +2,20 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { getFinancialOverview, getRevenueRecoveryData, getDailyBreakdown } from '@/app/actions/finances';
-import { createPayment, voidPayment, createExpense, openCashShift, closeCashShift } from '@/app/actions/finance';
+import { voidPayment } from '@/app/actions/finance';
 import {
   DollarSign,
   Wallet,
-  CreditCard,
   TrendingUp,
   TrendingDown,
   MessageCircle,
   Clock,
   Ban,
-  PlusCircle,
   ShieldCheck,
   Receipt,
-  BarChart3,
-  ArrowRight,
-  Plus,
+  Scale,
+  CheckCircle,
+  AlertTriangle,
   X,
 } from 'lucide-react';
 
@@ -32,22 +30,20 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
   const [breakdownData, setBreakdownData] = useState<any[]>([]);
   const chartScrollRef = useRef<HTMLDivElement>(null);
 
+  // Operational audit state (Strictly Read-Only)
+  const { activeShift, transactions, closedShifts, summary } = operationalData || {};
+  const [isVoidingId, setIsVoidingId] = useState<string | null>(null);
+
   useEffect(() => {
     if (chartScrollRef.current) {
       chartScrollRef.current.scrollLeft = chartScrollRef.current.scrollWidth;
     }
   }, [timeframe, overview]);
 
-  // Operational state
-  const { activeShift, transactions, members, summary } = operationalData || {};
-  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
-  const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
-  const [isVoidingId, setIsVoidingId] = useState<string | null>(null);
-
   const handleVoid = async (id: string) => {
-    const reason = window.prompt('Por favor, ingresa el motivo de la anulación (obligatorio):');
+    const reason = window.prompt('Por favor, ingresa el motivo de la anulación (obligatorio para auditoría):');
     if (reason !== null) {
-      if (reason.trim() === '') return alert('El motivo es obligatorio.');
+      if (reason.trim() === '') return alert('El motivo de anulación es obligatorio.');
       setIsVoidingId(id);
       await voidPayment(id, reason);
       setIsVoidingId(null);
@@ -102,7 +98,7 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
   if (loading && !overview) {
     return (
       <div className="flex items-center justify-center py-24 text-slate-400 text-xs font-medium animate-pulse">
-        Cargando analítica financiera...
+        Cargando auditoría financiera...
       </div>
     );
   }
@@ -112,9 +108,14 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
       {/* PAGE HEADER & TIMEFRAME SELECTOR */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">Analítica Financiera</h1>
-          <p className="text-xs text-slate-500">
-            Facturación consolidada, desglose por medios de pago y cobranza preventiva
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">Auditoría Financiera</h1>
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+              Solo Lectura
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Control de facturación, conciliación de arqueos de caja y auditoría del libro mayor
           </p>
         </div>
 
@@ -147,7 +148,7 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-500">Facturación Total</span>
+                <span className="text-xs font-medium text-slate-500">Facturación Período</span>
                 <span
                   className={`text-xs font-medium px-2 py-0.5 rounded-full border ${
                     overview.percentageChange >= 0
@@ -161,30 +162,28 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
               </div>
               <div className="mt-3">
                 <p className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
-                  {formatMoney(overview.total)}
+                  {formatMoney(overview.totalRevenue)}
                 </p>
-                <p className="text-[11px] text-slate-400 mt-1">Total recaudado en el período</p>
+                <p className="text-[11px] text-slate-500 mt-1">Total recaudado en el período</p>
               </div>
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-slate-500">Medios de Pago</span>
-                <span className="p-1 rounded-md bg-slate-100 text-slate-700">
-                  <CreditCard className="h-3.5 w-3.5" />
-                </span>
+                <span className="text-xs text-slate-400">Desglose</span>
               </div>
               <div className="mt-3 space-y-1">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-600 font-medium">💵 Efectivo:</span>
-                  <span className="font-bold tabular-nums text-slate-900">
-                    {formatMoney(overview.byMethod.cash)}
+                  <span className="text-slate-600">💵 Efectivo:</span>
+                  <span className="font-bold text-slate-900 tabular-nums">
+                    {formatMoney(overview.cashRevenue)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-600 font-medium">🏦 Transferencia:</span>
-                  <span className="font-bold tabular-nums text-slate-900">
-                    {formatMoney(overview.byMethod.transfer)}
+                  <span className="text-slate-600">🏦 Transferencia:</span>
+                  <span className="font-bold text-slate-900 tabular-nums">
+                    {formatMoney(overview.transferRevenue)}
                   </span>
                 </div>
               </div>
@@ -199,184 +198,194 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
               </div>
               <div className="mt-3">
                 <p className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
-                  {formatMoney(recoveryData?.totalAtRisk || 0)}
+                  {formatMoney(recoveryData?.totalAtRiskRevenue || 0)}
                 </p>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Membresías próximas a expirar o en mora
-                </p>
+                <p className="text-[11px] text-slate-500 mt-1">Membresías próximas a expirar o en mora</p>
               </div>
             </div>
           </div>
 
-          {/* CHART & REVENUE RECOVERY */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Gráfica de Tendencia de Ingresos */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200/80 shadow-xs p-5 flex flex-col justify-between">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-slate-700" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Tendencia de Ingresos Diarios
-                  </h3>
-                </div>
-                <span className="text-[11px] text-slate-400">
-                  Haz clic en una barra para ver desglose
-                </span>
+          {/* AUDIT SUMMARY METRICS: Ingresos Mes, Descuadres Totales, Gastos Mes, Estado Turno */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Ingresos Mes */}
+            <div className="bg-slate-50/75 p-4 rounded-xl border border-slate-200/80 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Ingresos del Mes
+                </p>
+                <p className="text-lg font-bold text-slate-900 tabular-nums mt-0.5">
+                  {formatMoney(summary?.incomeMonth || overview.totalRevenue)}
+                </p>
               </div>
-
-              {overview.chartData.length > 0 || timeframe === 'month' ? (
-                <div className="relative w-full overflow-hidden bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                  {(() => {
-                    let filled: any[] = [];
-                    const now = new Date();
-
-                    if (timeframe === 'year') {
-                      const months = [
-                        'Ene',
-                        'Feb',
-                        'Mar',
-                        'Abr',
-                        'May',
-                        'Jun',
-                        'Jul',
-                        'Ago',
-                        'Sep',
-                        'Oct',
-                        'Nov',
-                        'Dic',
-                      ];
-                      filled = months.map((m, i) => ({
-                        date: m,
-                        total: 0,
-                        isMonth: true,
-                        monthIdx: i,
-                      }));
-
-                      overview.chartData.forEach((d: any) => {
-                        const mIdx = new Date(d.date + 'T12:00:00').getMonth();
-                        filled[mIdx].total += Number(d.total) || 0;
-                      });
-                    } else {
-                      let start, end;
-                      if (timeframe === 'month') {
-                        start = new Date(now.getFullYear(), now.getMonth(), 1);
-                        end = new Date(now);
-                      } else {
-                        start =
-                          overview.chartData.length > 0
-                            ? new Date(overview.chartData[0].date + 'T12:00:00')
-                            : new Date();
-                        end =
-                          overview.chartData.length > 0
-                            ? new Date(
-                                overview.chartData[overview.chartData.length - 1].date +
-                                  'T12:00:00'
-                              )
-                            : new Date();
-                      }
-
-                      const map = new Map(overview.chartData.map((d: any) => [d.date, d.total]));
-                      for (let c = new Date(start); c <= end; c.setDate(c.getDate() + 1)) {
-                        const dStr = c.toISOString().split('T')[0];
-                        filled.push({
-                          date: dStr,
-                          total: map.get(dStr) || 0,
-                          dateObj: new Date(c),
-                          isMonth: false,
-                        });
-                      }
-                    }
-
-                    const max =
-                      filled.length > 0
-                        ? Math.max(...filled.map((x) => Number(x.total) || 0))
-                        : 0;
-                    const maxDisplay = max === 0 ? 100 : max;
-
-                    const formatY = (val: number) => {
-                      if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
-                      if (val >= 1000) return `$${(val / 1000).toFixed(0)}k`;
-                      return `$${val}`;
-                    };
-
-                    const formatDateShort = (d: Date) => {
-                      return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-                    };
-
-                    const scrollContainerClass =
-                      timeframe === 'year'
-                        ? 'flex-1 overflow-hidden pb-2'
-                        : 'flex-1 overflow-x-auto overflow-y-hidden pb-2 [scrollbar-width:thin]';
-
-                    const innerContainerClass =
-                      timeframe === 'year'
-                        ? 'w-full grid grid-cols-12 gap-1 items-end h-44 px-2 border-b border-dashed border-slate-200'
-                        : 'flex items-end gap-2.5 h-44 min-w-max px-2 border-b border-dashed border-slate-200';
-
-                    return (
-                      <div className="flex w-full items-end">
-                        <div className="w-12 flex flex-col justify-between h-44 py-2 text-[10px] font-mono text-slate-400 select-none border-r border-slate-200 bg-transparent pr-1">
-                          <span>{formatY(maxDisplay)}</span>
-                          <span>{formatY(maxDisplay / 2)}</span>
-                          <span>$0</span>
-                        </div>
-
-                        <div ref={chartScrollRef} className={scrollContainerClass}>
-                          <div className={innerContainerClass}>
-                            {filled.map((d: any) => {
-                              const totalVal = Number(d.total) || 0;
-                              const height = maxDisplay > 0 ? (totalVal / maxDisplay) * 100 : 0;
-                              const label = d.isMonth ? d.date : formatDateShort(d.dateObj);
-
-                              return (
-                                <div
-                                  key={d.date}
-                                  className={`${
-                                    timeframe === 'year' ? 'w-full' : 'w-8'
-                                  } flex flex-col items-center gap-1.5 group relative h-full justify-end cursor-pointer`}
-                                  onClick={() => !d.isMonth && loadBreakdown(d.date)}
-                                >
-                                  {totalVal > 0 ? (
-                                    <div
-                                      className="w-5 max-w-full bg-slate-900 hover:bg-slate-700 rounded-t-md transition-all duration-150 relative"
-                                      style={{ height: `${height}%`, minHeight: '4px' }}
-                                    >
-                                      <div className="absolute -top-9 left-1/2 -translate-x-1/2 z-30 hidden group-hover:flex flex-col items-center bg-slate-900 text-white text-[10px] font-semibold py-1 px-2 rounded-md shadow-lg whitespace-nowrap pointer-events-none">
-                                        <span>{formatMoney(totalVal)}</span>
-                                        <span className="text-[9px] text-slate-300 font-normal">
-                                          {label}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="w-5 h-1 bg-slate-200/80 rounded-t-sm" />
-                                  )}
-                                  <span className="text-[9px] text-slate-400 select-none">
-                                    {label}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <div className="h-44 flex items-center justify-center text-xs text-slate-400">
-                  Sin registros suficientes en este período
-                </div>
-              )}
+              <div className="p-2 rounded-lg bg-emerald-100/80 text-emerald-800">
+                <TrendingUp className="h-4 w-4" />
+              </div>
             </div>
 
-            {/* Cartera y Recuperación de Socios */}
+            {/* Gastos Operativos Mes */}
+            <div className="bg-slate-50/75 p-4 rounded-xl border border-slate-200/80 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Gastos del Mes
+                </p>
+                <p className="text-lg font-bold text-slate-900 tabular-nums mt-0.5">
+                  {formatMoney(summary?.expenseMonth || 0)}
+                </p>
+              </div>
+              <div className="p-2 rounded-lg bg-rose-100/80 text-rose-800">
+                <TrendingDown className="h-4 w-4" />
+              </div>
+            </div>
+
+            {/* Descuadres Totales de Caja */}
+            <div className="bg-slate-50/75 p-4 rounded-xl border border-slate-200/80 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Descuadres en Caja
+                </p>
+                <p
+                  className={`text-lg font-bold tabular-nums mt-0.5 ${
+                    (summary?.totalDifference || 0) < 0
+                      ? 'text-rose-600'
+                      : (summary?.totalDifference || 0) > 0
+                      ? 'text-blue-600'
+                      : 'text-emerald-600'
+                  }`}
+                >
+                  {formatMoney(summary?.totalDifference || 0)}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  {summary?.discrepancyCount > 0
+                    ? `${summary.discrepancyCount} turno(s) con descuadre`
+                    : 'Arqueos 100% cuadrados'}
+                </p>
+              </div>
+              <div
+                className={`p-2 rounded-lg ${
+                  summary?.discrepancyCount > 0
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                {summary?.discrepancyCount > 0 ? (
+                  <AlertTriangle className="h-4 w-4" />
+                ) : (
+                  <Scale className="h-4 w-4" />
+                )}
+              </div>
+            </div>
+
+            {/* Estado Turno Mostrador (Solo Lectura) */}
+            <div className="bg-slate-50/75 p-4 rounded-xl border border-slate-200/80 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Caja Mostrador Actual
+                </p>
+                <p className="text-sm font-bold text-slate-900 mt-0.5 truncate max-w-[150px]">
+                  {activeShift ? `Abierto (${activeShift.userName || 'Cajero'})` : 'Caja Cerrada'}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5 tabular-nums">
+                  {activeShift
+                    ? `Esperado: ${formatMoney(summary?.currentExpectedCash || 0)}`
+                    : 'Sin turno activo'}
+                </p>
+              </div>
+              <div className="p-2 rounded-lg bg-slate-200 text-slate-700">
+                <Clock className="h-4 w-4" />
+              </div>
+            </div>
+          </div>
+
+          {/* CHARTS & RECOVERY SECTION */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* GRÁFICO DE BARRAS INTERACTIVO */}
+            <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Tendencia de Ingresos Diarios
+                  </h2>
+                  <p className="text-[11px] text-slate-400">
+                    Haz clic en una barra para ver el desglose detallado de pagos
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-slate-900" />
+                  <span>Cobros</span>
+                </div>
+              </div>
+
+              {/* Scroll Container */}
+              <div
+                ref={chartScrollRef}
+                className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pt-4 pb-2"
+              >
+                <div className="min-w-[600px] flex flex-col justify-end">
+                  {/* Gráfico y Eje Y */}
+                  <div className="relative flex">
+                    {/* Eje Y Labels */}
+                    <div className="w-12 h-44 flex flex-col justify-between items-end pr-2 text-[10px] text-slate-400 select-none pb-4">
+                      <span>{formatMoney(overview.maxRevenue)}</span>
+                      <span>{formatMoney(overview.maxRevenue / 2)}</span>
+                      <span>$0</span>
+                    </div>
+
+                    {/* Barras */}
+                    <div className="flex-1 flex items-end justify-between gap-1.5 h-44 border-b border-slate-100 pb-2 relative">
+                      {overview.trend.map((t: any) => {
+                        const heightPct = overview.maxRevenue
+                          ? (t.revenue / overview.maxRevenue) * 100
+                          : 0;
+                        const hasRevenue = t.revenue > 0;
+                        const isSelected = selectedDate === t.date;
+
+                        return (
+                          <div
+                            key={t.date}
+                            onClick={() => loadBreakdown(t.date)}
+                            className="flex-1 flex flex-col items-center group cursor-pointer h-full justify-end"
+                          >
+                            {/* Tooltip on Hover */}
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 px-2 py-1 bg-slate-900 text-white text-[10px] rounded-md pointer-events-none whitespace-nowrap z-10 font-mono shadow-xs">
+                              {t.label}: {formatMoney(t.revenue)}
+                            </div>
+
+                            {/* Barra */}
+                            <div
+                              style={{ height: `${Math.max(heightPct, 2)}%` }}
+                              className={`w-full max-w-[28px] rounded-t-sm transition-all duration-200 ${
+                                isSelected
+                                  ? 'bg-blue-600 shadow-sm'
+                                  : hasRevenue
+                                  ? 'bg-slate-900 group-hover:bg-slate-700'
+                                  : 'bg-slate-100 group-hover:bg-slate-200'
+                              }`}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Eje X Labels */}
+                  <div className="flex ml-12 gap-1.5 pt-2 text-[10px] text-slate-400 select-none">
+                    {overview.trend.map((t: any) => (
+                      <div key={t.date} className="flex-1 text-center truncate">
+                        {t.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* GESTIÓN DE COBRANZA PREVENTIVA */}
             <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-5 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
                     Gestión de Cobranza
-                  </h3>
+                  </h2>
                   <div className="flex gap-1 text-[11px]">
                     <button
                       onClick={() => setRecoveryFilter('all')}
@@ -446,272 +455,242 @@ export function FinancesClient({ operationalData }: { operationalData?: any }) {
         </>
       )}
 
-      {/* SECCIÓN OPERATIVA (Turno de caja y Transacciones) */}
-      {operationalData && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
-          {/* Formularios Operativos */}
-          <div className="lg:col-span-1 space-y-4">
-            {/* Turno de Caja */}
-            <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" /> Turno de Caja
+      {/* SECCIÓN DE AUDITORÍA: HISTORIAL DE TURNOS CERRADOS Y TRANSACCIONES A ANCHO COMPLETO */}
+      <div className="space-y-6 pt-2">
+        {/* TABLA: HISTORIAL DE TURNOS CERRADOS (ARQUEOS) */}
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/75">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <Scale className="h-4 w-4 text-slate-700" />
+                Historial de Turnos Cerrados (Auditoría de Arqueos)
               </h2>
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 mb-3 text-xs">
-                <span className="text-slate-500 font-medium">Efectivo en Caja (Esperado):</span>
-                <p className="text-xl font-bold tabular-nums text-slate-900 mt-0.5">
-                  {activeShift ? formatMoney(summary?.currentExpectedCash) : 'Caja Cerrada'}
-                </p>
-              </div>
-
-              {activeShift ? (
-                <form action={closeCashShift} className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">
-                      Efectivo Físico Contado ($)
-                    </label>
-                    <input
-                      name="finalCashCounted"
-                      type="number"
-                      required
-                      placeholder="150000"
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums font-semibold"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold py-2 px-4 rounded-lg transition shadow-2xs"
-                  >
-                    Cerrar Turno (Arqueo)
-                  </button>
-                </form>
-              ) : (
-                <form action={openCashShift} className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">
-                      Base Inicial en Efectivo ($)
-                    </label>
-                    <input
-                      name="initialCash"
-                      type="number"
-                      required
-                      defaultValue="50000"
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums font-semibold"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold py-2 px-4 rounded-lg transition shadow-2xs"
-                  >
-                    Abrir Turno de Caja
-                  </button>
-                </form>
-              )}
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Trazabilidad de arqueos ciegos, bases iniciales y detección de descuadres por cajero
+              </p>
             </div>
-
-            {/* Registrar Recaudo Manual */}
-            <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
-                <PlusCircle className="h-3.5 w-3.5 text-emerald-600" /> Nuevo Recaudo
-              </h2>
-              <form
-                action={async (formData) => {
-                  setIsSubmittingPayment(true);
-                  await createPayment(formData);
-                  setIsSubmittingPayment(false);
-                }}
-                className="space-y-2.5"
-              >
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Socio *</label>
-                  <select
-                    name="memberId"
-                    required
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
-                  >
-                    <option value="">Selecciona un socio...</option>
-                    {members?.map((m: any) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} ({m.document})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Monto ($) *</label>
-                    <input
-                      name="amount"
-                      type="number"
-                      required
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Método *</label>
-                    <select
-                      name="method"
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
-                    >
-                      <option value="cash">Efectivo</option>
-                      <option value="transfer">Transf./Tarjeta</option>
-                    </select>
-                  </div>
-                </div>
-                <button
-                  disabled={isSubmittingPayment}
-                  type="submit"
-                  className="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2 px-4 rounded-lg transition shadow-2xs disabled:opacity-50 mt-1"
-                >
-                  {isSubmittingPayment ? 'Procesando...' : 'Registrar Pago'}
-                </button>
-              </form>
-            </div>
-
-            {/* Registrar Gasto Operativo */}
-            <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
-                <TrendingDown className="h-3.5 w-3.5 text-rose-600" /> Registrar Gasto
-              </h2>
-              <form
-                action={async (formData) => {
-                  setIsSubmittingExpense(true);
-                  await createExpense(formData);
-                  setIsSubmittingExpense(false);
-                }}
-                className="space-y-2.5"
-              >
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Concepto *</label>
-                  <input
-                    name="description"
-                    required
-                    placeholder="Ej. Limpieza o reparaciones"
-                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Monto ($) *</label>
-                  <input
-                    name="amount"
-                    type="number"
-                    required
-                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none tabular-nums font-semibold"
-                  />
-                </div>
-                <button
-                  disabled={isSubmittingExpense}
-                  type="submit"
-                  className="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold py-2 px-4 rounded-lg transition shadow-2xs disabled:opacity-50 mt-1"
-                >
-                  {isSubmittingExpense ? 'Procesando...' : 'Registrar Salida'}
-                </button>
-              </form>
-            </div>
+            <span className="text-xs font-semibold text-slate-500">
+              {closedShifts?.length || 0} turnos auditados
+            </span>
           </div>
 
-          {/* Historial de Transacciones */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
-              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/75">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Transacciones Operativas
-                </h2>
-                <span className="text-xs text-slate-500">
-                  {transactions?.length || 0} movimientos
-                </span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left">
-                  <thead className="bg-slate-50/50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">
-                    <tr>
-                      <th className="py-3 px-4">Fecha / Hora</th>
-                      <th className="py-3 px-4">Detalle</th>
-                      <th className="py-3 px-4">Monto</th>
-                      <th className="py-3 px-4">Estado</th>
-                      <th className="py-3 px-4 text-right">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm">
-                    {transactions?.map((tx: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="py-3 px-4 text-xs text-slate-500 tabular-nums">
-                          {new Date(tx.date).toLocaleString('es-CO', {
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50/50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                  <th className="py-3 px-4">Cajero / Usuario</th>
+                  <th className="py-3 px-4">Apertura - Cierre</th>
+                  <th className="py-3 px-4">Base Inicial</th>
+                  <th className="py-3 px-4">Esperado Sistema</th>
+                  <th className="py-3 px-4">Contado Físico</th>
+                  <th className="py-3 px-4">Diferencia (Descuadre)</th>
+                  <th className="py-3 px-4 text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {closedShifts?.map((shift: any) => {
+                  const diff = Number(shift.difference || 0);
+                  const isCuadrado = diff === 0;
+                  const isFaltante = diff < 0;
+
+                  return (
+                    <tr key={shift.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3 px-4 font-semibold text-slate-950">
+                        {shift.userName || 'Personal de Recepción'}
+                      </td>
+                      <td className="py-3 px-4 text-slate-500 tabular-nums">
+                        <div>
+                          <span>Inició: </span>
+                          {new Date(shift.openingTime).toLocaleDateString('es-CO', {
                             day: '2-digit',
                             month: 'short',
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
-                        </td>
-                        <td className="py-3 px-4 font-semibold text-slate-800">
-                          {tx.description}{' '}
-                          <span className="text-[10px] text-slate-400 block uppercase font-normal">
-                            {tx.method === 'cash' ? 'Efectivo' : 'Transf.'}
-                          </span>
-                        </td>
-                        <td
-                          className={`py-3 px-4 font-bold tabular-nums ${
-                            tx.status === 'voided'
-                              ? 'text-slate-400 line-through'
-                              : tx.type === 'income'
-                              ? 'text-emerald-600'
-                              : 'text-rose-600'
+                        </div>
+                        {shift.closingTime && (
+                          <div className="text-[11px] text-slate-400">
+                            <span>Cerró: </span>
+                            {new Date(shift.closingTime).toLocaleDateString('es-CO', {
+                              day: '2-digit',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 font-medium text-slate-700 tabular-nums">
+                        {formatMoney(Number(shift.initialCash || 0))}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-slate-900 tabular-nums">
+                        {formatMoney(Number(shift.finalCashExpected || 0))}
+                      </td>
+                      <td className="py-3 px-4 font-bold text-slate-950 tabular-nums">
+                        {formatMoney(Number(shift.finalCashCounted || 0))}
+                      </td>
+                      <td className="py-3 px-4 tabular-nums">
+                        <span
+                          className={`inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full border ${
+                            isCuadrado
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : isFaltante
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-blue-50 text-blue-700 border-blue-200'
                           }`}
                         >
-                          {tx.type === 'income' ? '+' : '-'}
-                          {formatMoney(tx.amount)}
-                        </td>
-                        <td className="py-3 px-4">
-                          {tx.status === 'paid' ? (
-                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-xs font-medium px-2 py-0.5 rounded-full">
-                              Pagado
-                            </span>
-                          ) : (
-                            <span
-                              className="bg-slate-100 text-slate-600 border border-slate-200/60 text-xs font-medium px-2 py-0.5 rounded-full cursor-help"
-                              title={`Motivo: ${tx.voidReason}`}
-                            >
-                              Anulado
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          {tx.type === 'income' && tx.status === 'paid' && (
-                            <button
-                              disabled={isVoidingId === tx.id}
-                              onClick={() => handleVoid(tx.id)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition disabled:opacity-50"
-                              title="Anular pago / Factura"
-                            >
-                              <Ban className="h-4 w-4" />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                    {(!transactions || transactions.length === 0) && (
-                      <tr>
-                        <td colSpan={5} className="py-12 px-4 text-center">
-                          <div className="max-w-md mx-auto flex flex-col items-center justify-center">
-                            <div className="h-10 w-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center mb-3 border border-slate-200/80">
-                              <Receipt className="h-5 w-5" />
-                            </div>
-                            <h3 className="text-sm font-semibold text-slate-900 mb-1">
-                              Sin movimientos de caja registrados
-                            </h3>
-                            <p className="text-xs text-slate-500 max-w-sm mb-4">
-                              Los cobros de membresías, ventas rápidas y gastos operativos se registrarán aquí en tiempo real.
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                          {isCuadrado
+                            ? '$0 (Cuadrado)'
+                            : isFaltante
+                            ? `${formatMoney(diff)} (Faltante)`
+                            : `+${formatMoney(diff)} (Sobrante)`}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="bg-slate-100 text-slate-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-slate-200">
+                          Auditado
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {(!closedShifts || closedShifts.length === 0) && (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400">
+                      No hay turnos cerrados aún para auditar.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+
+        {/* TABLA: LIBRO MAYOR DE TRANSACCIONES OPERATIVAS (A TODO EL ANCHO) */}
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-2 bg-slate-50/75">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <Receipt className="h-4 w-4 text-slate-700" />
+                Libro Mayor de Transacciones Operativas
+              </h2>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Registro cronológico completo de ingresos de membresías, pases exprés y gastos de caja
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-slate-500">
+              {transactions?.length || 0} movimientos registrados
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px] text-left">
+              <thead className="bg-slate-50/50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                  <th className="py-3 px-4">Fecha / Hora</th>
+                  <th className="py-3 px-4">Concepto / Socio</th>
+                  <th className="py-3 px-4">Tipo</th>
+                  <th className="py-3 px-4">Medio de Pago</th>
+                  <th className="py-3 px-4">Monto</th>
+                  <th className="py-3 px-4">Estado Contable</th>
+                  <th className="py-3 px-4 text-right">Auditoría</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {transactions?.map((tx: any, idx: number) => (
+                  <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3.5 px-4 text-slate-500 tabular-nums">
+                      {new Date(tx.date).toLocaleString('es-CO', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-900">
+                      {tx.description}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          tx.type === 'income'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                        }`}
+                      >
+                        {tx.type === 'income' ? 'Ingreso' : 'Egreso'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-600 font-medium">
+                      {tx.method === 'cash' ? 'Efectivo' : 'Transferencia'}
+                    </td>
+                    <td
+                      className={`py-3.5 px-4 font-bold tabular-nums text-sm ${
+                        tx.status === 'voided'
+                          ? 'text-slate-400 line-through'
+                          : tx.type === 'income'
+                          ? 'text-emerald-600'
+                          : 'text-rose-600'
+                      }`}
+                    >
+                      {tx.type === 'income' ? '+' : '-'}
+                      {formatMoney(tx.amount)}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      {tx.status === 'paid' ? (
+                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[11px] font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Pagado
+                        </span>
+                      ) : (
+                        <span
+                          className="bg-slate-100 text-slate-600 border border-slate-200/60 text-[11px] font-medium px-2 py-0.5 rounded-full cursor-help"
+                          title={`Motivo de anulación: ${tx.voidReason || 'No especificado'}`}
+                        >
+                          Anulado
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      {tx.type === 'income' && tx.status === 'paid' && (
+                        <button
+                          disabled={isVoidingId === tx.id}
+                          onClick={() => handleVoid(tx.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition disabled:opacity-50 inline-flex items-center gap-1"
+                          title="Anular pago con motivo auditado"
+                        >
+                          <Ban className="h-4 w-4" />
+                          <span className="text-[11px] font-medium hidden sm:inline">Anular</span>
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+
+                {(!transactions || transactions.length === 0) && (
+                  <tr>
+                    <td colSpan={7} className="py-12 px-4 text-center">
+                      <div className="max-w-md mx-auto flex flex-col items-center justify-center">
+                        <div className="h-10 w-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center mb-3 border border-slate-200/80">
+                          <Receipt className="h-5 w-5" />
+                        </div>
+                        <h3 className="text-sm font-semibold text-slate-900 mb-1">
+                          Sin movimientos de caja registrados
+                        </h3>
+                        <p className="text-xs text-slate-500 max-w-sm">
+                          Los cobros de membresías, ventas y gastos se reflejarán aquí en tiempo real en modo auditoría.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       {/* MODAL: Desglose del Día */}
       {selectedDate && (

@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/db';
-import { payments, expenses, cashShifts, members, coaches, memberSubscriptions } from '@/db/schema';
+import { payments, expenses, cashShifts, members, coaches, memberSubscriptions, appUsers } from '@/db/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { verifySession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
@@ -31,6 +31,7 @@ export async function createPayment(formData: FormData) {
     status: 'paid'
   });
 
+  revalidatePath('/dashboard/finances');
   revalidatePath('/dashboard/finance');
 }
 
@@ -61,6 +62,7 @@ export async function voidPayment(paymentId: string, reason?: string) {
      })
      .where(and(eq(payments.id, paymentId), eq(payments.gymId, auth.session.gymId)));
 
+   revalidatePath('/dashboard/finances');
    revalidatePath('/dashboard/finance');
 }
 
@@ -80,7 +82,8 @@ export async function createExpense(formData: FormData) {
     description,
   });
 
-  revalidatePath('/dashboard/finance');
+  revalidatePath('/dashboard/finances');
+  revalidatePath('/dashboard/reception');
 }
 
 // TURNOS DE CAJA
@@ -88,7 +91,22 @@ export async function getActiveShift() {
   const auth = await verifySession();
   if (!auth || !auth.session.branchId) return null;
 
-  const [shift] = await db.select().from(cashShifts)
+  const [shift] = await db.select({
+      id: cashShifts.id,
+      gymId: cashShifts.gymId,
+      branchId: cashShifts.branchId,
+      userId: cashShifts.userId,
+      openingTime: cashShifts.openingTime,
+      closingTime: cashShifts.closingTime,
+      initialCash: cashShifts.initialCash,
+      finalCashExpected: cashShifts.finalCashExpected,
+      finalCashCounted: cashShifts.finalCashCounted,
+      difference: cashShifts.difference,
+      isClosed: cashShifts.isClosed,
+      userName: appUsers.fullName,
+    })
+    .from(cashShifts)
+    .leftJoin(appUsers, eq(cashShifts.userId, appUsers.id))
     .where(
       and(
         eq(cashShifts.branchId, auth.session.branchId),
@@ -112,7 +130,8 @@ export async function openCashShift(formData: FormData) {
     initialCash,
   });
 
-  revalidatePath('/dashboard/finance');
+  revalidatePath('/dashboard/finances');
+  revalidatePath('/dashboard/reception');
 }
 
 export async function closeCashShift(formData: FormData) {
@@ -161,10 +180,11 @@ export async function closeCashShift(formData: FormData) {
     })
     .where(eq(cashShifts.id, shift.id));
 
-  revalidatePath('/dashboard/finance');
+  revalidatePath('/dashboard/finances');
+  revalidatePath('/dashboard/reception');
 }
 
-// OBTENER RESUMEN Y DATOS PARA LA VISTA
+// OBTENER RESUMEN Y DATOS PARA LA VISTA (ESTRICTAMENTE AUDITORÍA)
 export async function getFinanceData() {
   const auth = await verifySession();
   if (!auth || !auth.session.branchId) throw new Error('No autorizado');
@@ -179,13 +199,13 @@ export async function getFinanceData() {
       voidReason: payments.voidReason,
       type: sql<string>`'income'`,
       date: payments.createdAt,
-      description: members.fullName
+      description: sql<string>`COALESCE(${members.fullName}, 'Mostrador')`
     })
     .from(payments)
     .leftJoin(members, eq(payments.memberId, members.id))
     .where(eq(payments.branchId, auth.session.branchId))
     .orderBy(desc(payments.createdAt))
-    .limit(10);
+    .limit(30);
 
   const recentExpenses = await db.select({
       id: expenses.id,
@@ -200,12 +220,32 @@ export async function getFinanceData() {
     .from(expenses)
     .where(eq(expenses.branchId, auth.session.branchId))
     .orderBy(desc(expenses.createdAt))
-    .limit(10);
+    .limit(30);
 
-  const allRecent = [...recentPayments, ...recentExpenses].sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime()).slice(0, 10);
+  const allRecent = [...recentPayments, ...recentExpenses]
+    .sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime())
+    .slice(0, 30);
+
+  // Historial de turnos cerrados para auditoría
+  const closedShifts = await db.select({
+      id: cashShifts.id,
+      openingTime: cashShifts.openingTime,
+      closingTime: cashShifts.closingTime,
+      initialCash: cashShifts.initialCash,
+      finalCashExpected: cashShifts.finalCashExpected,
+      finalCashCounted: cashShifts.finalCashCounted,
+      difference: cashShifts.difference,
+      userName: appUsers.fullName,
+    })
+    .from(cashShifts)
+    .leftJoin(appUsers, eq(cashShifts.userId, appUsers.id))
+    .where(and(eq(cashShifts.branchId, auth.session.branchId), eq(cashShifts.isClosed, true)))
+    .orderBy(desc(cashShifts.closingTime))
+    .limit(15);
 
   const today = new Date();
   today.setHours(0,0,0,0);
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
   const [{ sum: incomeToday }] = await db.select({ sum: sql<string | number>`COALESCE(SUM(CAST(${payments.amount} AS NUMERIC)), 0)` })
     .from(payments).where(and(eq(payments.branchId, auth.session.branchId), eq(payments.status, 'paid'), sql`${payments.createdAt} >= ${today.toISOString()}`));
@@ -213,8 +253,17 @@ export async function getFinanceData() {
   const [{ sum: expenseToday }] = await db.select({ sum: sql<string | number>`COALESCE(SUM(CAST(${expenses.amount} AS NUMERIC)), 0)` })
     .from(expenses).where(and(eq(expenses.branchId, auth.session.branchId), sql`${expenses.createdAt} >= ${today.toISOString()}`));
 
-  const membersList = await db.select({ id: members.id, name: members.fullName, document: members.documentId }).from(members).where(eq(members.gymId, auth.session.gymId));
-  const coachesList = await db.select({ id: coaches.id, name: coaches.fullName }).from(coaches).where(and(eq(coaches.gymId, auth.session.gymId), eq(coaches.isActive, true)));
+  const [{ sum: incomeMonth }] = await db.select({ sum: sql<string | number>`COALESCE(SUM(CAST(${payments.amount} AS NUMERIC)), 0)` })
+    .from(payments).where(and(eq(payments.branchId, auth.session.branchId), eq(payments.status, 'paid'), sql`${payments.createdAt} >= ${firstDayOfMonth.toISOString()}`));
+
+  const [{ sum: expenseMonth }] = await db.select({ sum: sql<string | number>`COALESCE(SUM(CAST(${expenses.amount} AS NUMERIC)), 0)` })
+    .from(expenses).where(and(eq(expenses.branchId, auth.session.branchId), sql`${expenses.createdAt} >= ${firstDayOfMonth.toISOString()}`));
+
+  const [{ sum: totalDifference }] = await db.select({ sum: sql<string | number>`COALESCE(SUM(CAST(${cashShifts.difference} AS NUMERIC)), 0)` })
+    .from(cashShifts).where(and(eq(cashShifts.branchId, auth.session.branchId), eq(cashShifts.isClosed, true)));
+
+  const [{ count: discrepancyCount }] = await db.select({ count: sql<number>`count(*)` })
+    .from(cashShifts).where(and(eq(cashShifts.branchId, auth.session.branchId), eq(cashShifts.isClosed, true), sql`CAST(${cashShifts.difference} AS NUMERIC) != 0`));
 
   let currentExpectedCash = 0;
   if (activeShift) {
@@ -225,5 +274,21 @@ export async function getFinanceData() {
      currentExpectedCash = Number(activeShift.initialCash || 0) + Number(sumPaymentsShift || 0) - Number(sumExpensesShift || 0);
   }
 
-  return { activeShift, transactions: allRecent, members: membersList, coaches: coachesList, summary: { incomeToday: Number(incomeToday || 0), expenseToday: Number(expenseToday || 0), currentExpectedCash: Number(currentExpectedCash || 0) } };
+  return {
+    activeShift: activeShift ? {
+      ...activeShift,
+      currentExpectedCash
+    } : null,
+    transactions: allRecent,
+    closedShifts,
+    summary: {
+      incomeToday: Number(incomeToday || 0),
+      expenseToday: Number(expenseToday || 0),
+      incomeMonth: Number(incomeMonth || 0),
+      expenseMonth: Number(expenseMonth || 0),
+      totalDifference: Number(totalDifference || 0),
+      discrepancyCount: Number(discrepancyCount || 0),
+      currentExpectedCash: Number(currentExpectedCash || 0)
+    }
+  };
 }

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { createMember, renewMemberPlan } from '@/app/actions/members';
+import { createMember } from '@/app/actions/members';
 import { CameraModal } from '@/components/CameraModal';
+import { RenewMemberModal } from './RenewMemberModal';
 import {
   Search,
   Plus,
@@ -73,7 +74,6 @@ export function MembersClient({
   const [renewMember, setRenewMember] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [isRenewing, setIsRenewing] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -149,19 +149,7 @@ export function MembersClient({
     });
   }
 
-  async function handleRenew(formData: FormData) {
-    setIsRenewing(true);
-    const res = await renewMemberPlan(formData);
-    setIsRenewing(false);
-    if (res.success) {
-      const planName = plans.find((p) => p.id === formData.get('planId'))?.name || 'Plan';
-      showToast(`Plan "${planName}" renovado exitosamente.`, 'success');
-      setRenewMember(null);
-      window.location.reload();
-    } else {
-      showToast(res.error, 'error');
-    }
-  }
+
 
   return (
     <div className="space-y-6 font-sans">
@@ -404,10 +392,11 @@ export function MembersClient({
                         </button>
                         <button
                           onClick={() => setRenewMember(member)}
-                          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition"
-                          title="Renovar / Extender plan"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300/80 rounded-md transition shadow-2xs"
+                          title="Cobrar / Renovar socio"
                         >
-                          <RefreshCw className="h-4 w-4" />
+                          <RefreshCw className="h-3 w-3 text-slate-700" />
+                          <span>Cobrar / Renovar</span>
                         </button>
                         <button
                           onClick={() => handleWhatsAppAction(member)}
@@ -645,123 +634,20 @@ export function MembersClient({
         }}
       />
 
-      {/* MODAL: Renovar / Cobrar Plan */}
+      {/* MODAL COBRAR / RENOVAR SOCIO */}
       {renewMember && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 w-full max-w-md max-h-[90dvh] overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-              <div className="flex items-center gap-2">
-                <RefreshCw className="h-4 w-4 text-slate-700" />
-                <h2 className="text-sm font-bold text-slate-900">Renovación de Membresía</h2>
-              </div>
-              <button
-                onClick={() => setRenewMember(null)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 mb-4 text-xs">
-              <p className="font-semibold text-slate-800">{renewMember.fullName}</p>
-              {renewMember.planName && (
-                <p className="text-slate-500 mt-0.5">
-                  Plan actual: {renewMember.planName}{' '}
-                  {renewMember.endDate &&
-                    `· Vence ${new Date(renewMember.endDate).toLocaleDateString('es-CO')}`}
-                </p>
-              )}
-            </div>
-
-            <form
-              action={async (formData) => {
-                await handleRenew(formData);
-              }}
-              className="space-y-3.5"
-            >
-              <input type="hidden" name="memberId" value={renewMember.id} />
-              <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Nuevo Plan a Asignar *
-                </label>
-                <select
-                  name="planId"
-                  required
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
-                >
-                  <option value="">-- Elige un plan comercial --</option>
-                  {plans.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.durationDays}d) · ${Number(p.price).toLocaleString('es-CO')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Método de Pago *
-                  </label>
-                  <select
-                    name="method"
-                    required
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
-                  >
-                    <option value="cash">Efectivo</option>
-                    <option value="transfer">Transferencia</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Ref. / Comprobante
-                  </label>
-                  <input
-                    name="referenceNumber"
-                    placeholder="Opcional"
-                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
-                  />
-                </div>
-              </div>
-
-              {coaches.length > 0 && (
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Entrenador Responsable
-                  </label>
-                  <select
-                    name="coachId"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none bg-white font-medium"
-                  >
-                    <option value="">Sin entrenador asignado</option>
-                    {coaches.map((c: any) => (
-                      <option key={c.id} value={c.id}>
-                        {c.fullName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="flex gap-2.5 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setRenewMember(null)}
-                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isRenewing}
-                  className="flex-1 px-3 py-2 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 disabled:opacity-60 transition shadow-2xs"
-                >
-                  {isRenewing ? 'Confirmando...' : 'Confirmar Renovación'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <RenewMemberModal
+          isOpen={!!renewMember}
+          onClose={() => setRenewMember(null)}
+          member={renewMember}
+          plans={plans}
+          coaches={coaches}
+          onSuccess={(msg) => {
+            showToast(msg, 'success');
+            window.location.reload();
+          }}
+          onError={(msg) => showToast(msg, 'error')}
+        />
       )}
     </div>
   );
