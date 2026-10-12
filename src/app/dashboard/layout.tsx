@@ -8,8 +8,6 @@ import DashboardMobileNav from './DashboardMobileNav';
 import { DashboardHeaderNav, NavItem } from './DashboardHeaderNav';
 import { UserNav } from './UserNav';
 import OnboardingBanner from './OnboardingBanner';
-import { BranchProvider } from '@/contexts/BranchContext';
-import { BranchSelector } from './BranchSelector';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,45 +64,41 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ];
 
   return (
-    <BranchProvider>
-      <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased">
-        <header className="sticky top-0 z-40 h-14 border-b border-slate-200/80 bg-white/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between">
-          <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
-            <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
-              <div className="h-7 w-7 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs shadow-xs group-hover:bg-slate-800 transition-colors">
-                SD
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold tracking-tight text-slate-900">SupraData</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/80">
-                  PRO
-                </span>
-              </div>
-            </Link>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased">
+      <header className="sticky top-0 z-40 h-14 border-b border-slate-200/80 bg-white/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="flex items-center gap-2 group">
+            <div className="h-7 w-7 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs shadow-xs group-hover:bg-slate-800 transition-colors">
+              SD
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold tracking-tight text-slate-900">SupraData</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/80">
+                PRO
+              </span>
+            </div>
+          </Link>
 
-            <BranchSelector />
+          <div className="h-4 w-px bg-slate-200 hidden md:block" />
 
-            <div className="h-4 w-px bg-slate-200 hidden md:block" />
+          <DashboardHeaderNav items={navItems} />
+        </div>
 
-            <DashboardHeaderNav items={navItems} />
-          </div>
+        <UserNav
+          gymName={gymName}
+          userName={userName}
+          userEmail={userEmail}
+          role={role}
+          logoutAction={handleLogout}
+        />
+      </header>
 
-          <UserNav
-            gymName={gymName}
-            userName={userName}
-            userEmail={userEmail}
-            role={role}
-            logoutAction={handleLogout}
-          />
-        </header>
+      <DashboardMobileNav items={navItems} />
+      <OnboardingBanner />
 
-        <DashboardMobileNav items={navItems} />
-        <OnboardingBanner />
-
-        <main className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8">
-          {children}
-        </main>
-      </div>
-    </BranchProvider>
+      <main className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8">
+        {children}
+      </main>
+    </div>
   );
 }
