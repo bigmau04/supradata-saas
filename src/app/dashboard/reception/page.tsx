@@ -1,4 +1,5 @@
 import { ReceptionClient } from './ReceptionClient';
+import { AvatarSupportWidget } from '@/components/ui/AvatarSupportWidget';
 import { getCoaches } from '@/app/actions/coaches';
 import { getProducts } from '@/app/actions/products';
 import { getActiveShift } from '@/app/actions/cash_shifts';
@@ -36,7 +37,7 @@ export default async function ReceptionPage() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       <ReceptionClient
         coaches={coaches.filter((c: any) => c.isActive)}
         products={products}
@@ -45,6 +46,7 @@ export default async function ReceptionPage() {
         userRole={userRole}
         liveMetrics={liveMetrics}
       />
+      <AvatarSupportWidget />
     </div>
   );
 }

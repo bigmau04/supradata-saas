@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@heygen/hyperframes-core": ["./src/lib/hyperframes-core/index.ts"]
     }
   },
   "include": [
