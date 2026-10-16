@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import MobileMenu from './MobileMenu';
+import { SystemAssembler } from '@/components/landing/SystemAssembler';
 
 export const metadata: Metadata = {
   title: 'SupraData | Control de Caja, Arqueo y Retención para Comercios en Mostrador',
@@ -634,6 +635,7 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
+        <SystemAssembler />
         <BentoGrid />
         <TechnicalVerticals />
         <AdvantagesGrid />
