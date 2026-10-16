@@ -22,7 +22,7 @@ export function RegisterClient() {
     }
   };
 
-  const inputClass = "w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100/70 transition-all [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset] [&:-webkit-autofill]:text-fill-slate-900 [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a]";
+  const inputClass = "w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100/70 focus:ring-emerald-500 transition-all [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset] [&:-webkit-autofill]:text-fill-slate-900 [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a]";
   const labelClass = "text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5 block";
 
   return (
@@ -112,7 +112,7 @@ export function RegisterClient() {
       <button 
         type="submit" 
         disabled={loading} 
-        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm py-2.5 px-4 rounded-xl shadow-xs shadow-blue-200 hover:shadow-md hover:shadow-blue-200/50 transition-all active:scale-[0.99] flex items-center justify-center cursor-pointer disabled:opacity-50 mt-2"
+        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm py-2.5 px-4 rounded-xl shadow-xs shadow-emerald-200 hover:shadow-md hover:shadow-emerald-200/50 transition-all active:scale-[0.99] flex items-center justify-center cursor-pointer disabled:opacity-50 mt-2"
       >
         {loading ? 'Creando cuenta...' : 'Crear Cuenta Comercial'}
       </button>

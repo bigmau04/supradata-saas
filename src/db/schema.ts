@@ -17,7 +17,7 @@ export const gyms = pgTable('gyms', {
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}).enableRLS();
 
 export const branches = pgTable('branches', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -28,7 +28,7 @@ export const branches = pgTable('branches', {
   defaultSessionHours: numeric('default_session_hours', { precision: 3, scale: 1 }).default('2.0'),
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}).enableRLS();
 
 export const appUsers = pgTable('app_users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -40,7 +40,7 @@ export const appUsers = pgTable('app_users', {
   role: userRoleEnum('role').notNull().default('receptionist'),
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}).enableRLS();
 
 export const coaches = pgTable('coaches', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -55,7 +55,7 @@ export const coaches = pgTable('coaches', {
   lastClockIn: timestamp('last_clock_in', { withTimezone: true }),
   lastClockOut: timestamp('last_clock_out', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}).enableRLS();
 
 export const members = pgTable('members', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -70,7 +70,7 @@ export const members = pgTable('members', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   gymIdDocUnique: uniqueIndex('gym_id_doc_idx').on(table.gymId, table.documentId),
-}));
+})).enableRLS();
 
 export const membershipPlans = pgTable('membership_plans', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -80,7 +80,7 @@ export const membershipPlans = pgTable('membership_plans', {
   price: numeric('price', { precision: 12, scale: 2 }).notNull(),
   description: text('description'),
   isActive: boolean('is_active').default(true),
-});
+}).enableRLS();
 
 export const memberSubscriptions = pgTable('member_subscriptions', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -95,7 +95,7 @@ export const memberSubscriptions = pgTable('member_subscriptions', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   activeSubIdx: index('idx_member_subscriptions_active').on(table.memberId, table.status, table.endDate),
-}));
+})).enableRLS();
 
 export const payments = pgTable('payments', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -116,13 +116,13 @@ export const payments = pgTable('payments', {
   voidedAt: timestamp('voided_at', { withTimezone: true }),
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}).enableRLS();
 
 export const expenseCategories = pgTable('expense_categories', {
   id: uuid('id').primaryKey().defaultRandom(),
   gymId: uuid('gym_id').notNull().references(() => gyms.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 100 }).notNull(),
-});
+}).enableRLS();
 
 export const expenses = pgTable('expenses', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -135,7 +135,7 @@ export const expenses = pgTable('expenses', {
   expenseDate: date('expense_date').defaultNow().notNull(),
   receiptUrl: text('receipt_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}).enableRLS();
 
 export const cashShifts = pgTable('cash_shifts', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -149,7 +149,7 @@ export const cashShifts = pgTable('cash_shifts', {
   finalCashCounted: numeric('final_cash_counted', { precision: 12, scale: 2 }),
   difference: numeric('difference', { precision: 12, scale: 2 }),
   isClosed: boolean('is_closed').default(false),
-});
+}).enableRLS();
 
 export const attendances = pgTable('attendances', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -161,7 +161,7 @@ export const attendances = pgTable('attendances', {
   method: checkinMethodEnum('method').default('qr_scan'),
 }, (table) => ({
   aforoIdx: index('idx_attendances_aforo').on(table.branchId, table.checkIn),
-}));
+})).enableRLS();
 
 export const products = pgTable('products', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -170,4 +170,4 @@ export const products = pgTable('products', {
   price: numeric('price', { precision: 12, scale: 2 }).notNull(),
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}).enableRLS();
